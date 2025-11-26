@@ -339,6 +339,49 @@
 }
 
 /* Scrollbar */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar {
+    -fx-background-color: #f5f5f5;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #cbd5e1;
+    -fx-background-radius: 5;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #94a3b8;
+}
+
+.scroll-bar .thumb:pressed {
+    -fx-background-color: #64748b;
+}
+
+.scroll-bar .track {
+    -fx-background-color: #f5f5f5;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+}
+
+.dark-theme .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.dark-theme .scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
 .dark-theme .scroll-bar {
     -fx-background-color: #1e1e1e;
 }

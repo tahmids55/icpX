@@ -6,6 +6,7 @@ import com.icpx.util.SceneManager;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -31,9 +32,14 @@ public class DashboardView {
         VBox sidebar = createSidebar();
         root.setLeft(sidebar);
 
-        // Content Area
-        VBox contentArea = createContentArea();
-        root.setCenter(contentArea);
+        // Content Area with ScrollPane
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setContent(createContentArea());
+        scrollPane.setFitToWidth(true);
+        scrollPane.getStyleClass().add("scroll-pane");
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        root.setCenter(scrollPane);
 
         Scene scene = new Scene(root, 1000, 700);
         scene.getStylesheets().add(DashboardView.class.getResource("/styles.css").toExternalForm());
@@ -144,8 +150,56 @@ public class DashboardView {
             Text welcomeText = new Text("Welcome, " + (user != null ? user.getUsername() : "User") + "!");
             welcomeText.getStyleClass().add("title");
 
-            Text subtitle = new Text("Your dashboard is ready");
+            Text subtitle = new Text("Track your competitive programming journey");
             subtitle.getStyleClass().add("subtitle");
+
+            // Statistics Overview
+            HBox statsContainer = new HBox(20);
+            statsContainer.setAlignment(Pos.CENTER_LEFT);
+            
+            // Total Solved Problems Card
+            VBox solvedCard = createStatCard("Total Problems Solved", "0", "Solved", e -> {
+                // TODO: Navigate to solved problems page
+                System.out.println("Navigate to solved problems");
+            });
+            
+            // Topics Learned Card
+            VBox topicsCard = createStatCard("Topics Learned", "0", "Learned", e -> {
+                // TODO: Navigate to learned topics page
+                System.out.println("Navigate to learned topics");
+            });
+            
+            statsContainer.getChildren().addAll(solvedCard, topicsCard);
+
+            // Rating Graph Card
+            VBox ratingGraphCard = new VBox(15);
+            ratingGraphCard.getStyleClass().add("card");
+            ratingGraphCard.setPadding(new Insets(20));
+            ratingGraphCard.setMaxWidth(Double.MAX_VALUE);
+
+            Text ratingTitle = new Text("Rating Graph");
+            ratingTitle.getStyleClass().add("label");
+            ratingTitle.setStyle("-fx-font-size: 18px;");
+
+            // Placeholder for rating graph
+            Pane ratingGraph = createRatingGraph();
+            
+            ratingGraphCard.getChildren().addAll(ratingTitle, new Separator(), ratingGraph);
+
+            // Heatmap Card
+            VBox heatmapCard = new VBox(15);
+            heatmapCard.getStyleClass().add("card");
+            heatmapCard.setPadding(new Insets(20));
+            heatmapCard.setMaxWidth(Double.MAX_VALUE);
+
+            Text heatmapTitle = new Text("Activity Heatmap");
+            heatmapTitle.getStyleClass().add("label");
+            heatmapTitle.setStyle("-fx-font-size: 18px;");
+
+            // Placeholder for heatmap
+            Pane heatmap = createHeatmap();
+            
+            heatmapCard.getChildren().addAll(heatmapTitle, new Separator(), heatmap);
 
             // Settings card
             VBox settingsCard = new VBox(15);
@@ -196,6 +250,9 @@ public class DashboardView {
                 welcomeText,
                 subtitle,
                 new VBox(10),
+                statsContainer,
+                ratingGraphCard,
+                heatmapCard,
                 settingsCard
             );
 
@@ -204,6 +261,187 @@ public class DashboardView {
         }
 
         return contentArea;
+    }
+    
+    private static VBox createStatCard(String title, String value, String buttonText, javafx.event.EventHandler<javafx.event.ActionEvent> action) {
+        VBox card = new VBox(12);
+        card.getStyleClass().add("card");
+        card.setPadding(new Insets(20));
+        card.setPrefWidth(240);
+        card.setAlignment(Pos.CENTER);
+        
+        Text titleText = new Text(title);
+        titleText.getStyleClass().add("subtitle");
+        titleText.setWrappingWidth(220);
+        titleText.setStyle("-fx-text-alignment: center;");
+        
+        Text valueText = new Text(value);
+        valueText.getStyleClass().add("title");
+        valueText.setStyle("-fx-font-size: 48px;");
+        
+        Button actionButton = new Button(buttonText);
+        actionButton.getStyleClass().add("button");
+        actionButton.setOnAction(action);
+        actionButton.setPrefWidth(180);
+        
+        card.getChildren().addAll(titleText, valueText, actionButton);
+        return card;
+    }
+    
+    /**
+     * Creates the rating graph visualization.
+     * TODO: Integrate actual rating data from your rating mechanism.
+     * Replace the sample data (xPoints, yPoints) with real user rating history.
+     * You can modify this method to accept rating data as parameters.
+     */
+    private static Pane createRatingGraph() {
+        VBox graphContainer = new VBox(10);
+        graphContainer.setPrefHeight(300);
+        graphContainer.setAlignment(Pos.CENTER);
+        
+        boolean isDark = SceneManager.getCurrentTheme().equals("dark");
+        
+        // Create canvas for the graph
+        Canvas canvas = new Canvas(800, 250);
+        javafx.scene.canvas.GraphicsContext gc = canvas.getGraphicsContext2D();
+        
+        // Draw axes
+        gc.setStroke(isDark ? Color.web("#5a5a5a") : Color.web("#e2e8f0"));
+        gc.setLineWidth(2);
+        
+        // Y-axis
+        gc.strokeLine(50, 20, 50, 230);
+        // X-axis
+        gc.strokeLine(50, 230, 780, 230);
+        
+        // TODO: Replace this sample data with actual rating data from database
+        // Draw sample rating line (placeholder data)
+        gc.setStroke(isDark ? Color.web("#4fc3f7") : Color.web("#2563eb"));
+        gc.setLineWidth(3);
+        
+        // Sample data - replace with real user rating history
+        double[] xPoints = {50, 150, 250, 350, 450, 550, 650, 750};
+        double[] yPoints = {200, 180, 160, 140, 120, 100, 90, 80};
+        
+        for (int i = 0; i < xPoints.length - 1; i++) {
+            gc.strokeLine(xPoints[i], yPoints[i], xPoints[i + 1], yPoints[i + 1]);
+            
+            // Draw points
+            gc.setFill(isDark ? Color.web("#4fc3f7") : Color.web("#2563eb"));
+            gc.fillOval(xPoints[i] - 4, yPoints[i] - 4, 8, 8);
+        }
+        gc.fillOval(xPoints[xPoints.length - 1] - 4, yPoints[yPoints.length - 1] - 4, 8, 8);
+        
+        // Draw grid lines
+        gc.setStroke(isDark ? Color.web("#3e3e42") : Color.web("#f1f5f9"));
+        gc.setLineWidth(1);
+        for (int i = 1; i < 6; i++) {
+            double y = 30 + i * 40;
+            gc.strokeLine(50, y, 780, y);
+        }
+        
+        // Add labels
+        gc.setFill(isDark ? Color.web("#9d9d9d") : Color.web("#64748b"));
+        gc.fillText("Rating: 0 → 1500", 60, 250);
+        
+        Text noDataText = new Text("Start solving problems to see your rating progress!");
+        noDataText.getStyleClass().add("subtitle");
+        noDataText.setStyle("-fx-font-style: italic;");
+        
+        graphContainer.getChildren().addAll(canvas, noDataText);
+        return graphContainer;
+    }
+    
+    /**
+     * Creates the activity heatmap visualization.
+     * TODO: Integrate actual activity/solving data from your heatmap mechanism.
+     * Replace the random activity values with real user activity data from database.
+     * You can modify this method to accept activity data as parameters.
+     */
+    private static Pane createHeatmap() {
+        VBox heatmapContainer = new VBox(10);
+        heatmapContainer.setAlignment(Pos.CENTER_LEFT);
+        
+        boolean isDark = SceneManager.getCurrentTheme().equals("dark");
+        
+        // Create grid for heatmap (52 weeks x 7 days)
+        GridPane grid = new GridPane();
+        grid.setHgap(4);
+        grid.setVgap(4);
+        
+        // Day labels
+        String[] days = {"Mon", "Wed", "Fri"};
+        int[] dayIndices = {1, 3, 5};
+        
+        for (int i = 0; i < days.length; i++) {
+            Text dayLabel = new Text(days[i]);
+            dayLabel.getStyleClass().add("subtitle");
+            dayLabel.setStyle("-fx-font-size: 10px;");
+            grid.add(dayLabel, 0, dayIndices[i]);
+        }
+        
+        // Create heatmap cells (12 months view)
+        for (int week = 0; week < 52; week++) {
+            for (int day = 0; day < 7; day++) {
+                Rectangle cell = new Rectangle(12, 12);
+                
+                // TODO: Replace random data with actual user activity from database
+                // Sample activity data (random for demonstration)
+                int activity = (int) (Math.random() * 5);
+                
+                String color;
+                if (activity == 0) {
+                    color = isDark ? "#1e1e1e" : "#f1f5f9";
+                } else if (activity == 1) {
+                    color = isDark ? "#0e4429" : "#9be9a8";
+                } else if (activity == 2) {
+                    color = isDark ? "#006d32" : "#40c463";
+                } else if (activity == 3) {
+                    color = isDark ? "#26a641" : "#30a14e";
+                } else {
+                    color = isDark ? "#39d353" : "#216e39";
+                }
+                
+                cell.setFill(Color.web(color));
+                cell.setStroke(isDark ? Color.web("#2d2d30") : Color.web("#e2e8f0"));
+                
+                grid.add(cell, week + 1, day);
+            }
+        }
+        
+        // Legend
+        HBox legend = new HBox(8);
+        legend.setAlignment(Pos.CENTER_LEFT);
+        legend.setPadding(new Insets(10, 0, 0, 0));
+        
+        Text lessText = new Text("Less");
+        lessText.getStyleClass().add("subtitle");
+        lessText.setStyle("-fx-font-size: 11px;");
+        
+        HBox legendBoxes = new HBox(4);
+        String[] legendColors = isDark 
+            ? new String[]{"#1e1e1e", "#0e4429", "#006d32", "#26a641", "#39d353"}
+            : new String[]{"#f1f5f9", "#9be9a8", "#40c463", "#30a14e", "#216e39"};
+            
+        for (String color : legendColors) {
+            Rectangle legendCell = new Rectangle(12, 12);
+            legendCell.setFill(Color.web(color));
+            legendCell.setStroke(isDark ? Color.web("#2d2d30") : Color.web("#e2e8f0"));
+            legendBoxes.getChildren().add(legendCell);
+        }
+        
+        Text moreText = new Text("More");
+        moreText.getStyleClass().add("subtitle");
+        moreText.setStyle("-fx-font-size: 11px;");
+        
+        legend.getChildren().addAll(lessText, legendBoxes, moreText);
+        
+        Text noDataText = new Text("No activity data yet. Start solving to fill the heatmap!");
+        noDataText.getStyleClass().add("subtitle");
+        noDataText.setStyle("-fx-font-style: italic;");
+        
+        heatmapContainer.getChildren().addAll(grid, legend, new VBox(5), noDataText);
+        return heatmapContainer;
     }
     
     private static StackPane createLogo() {
