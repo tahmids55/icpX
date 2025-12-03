@@ -32,8 +32,26 @@ public class DatabaseHelper {
                 "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
                 ")";
 
+        String createTargetsTable = "CREATE TABLE IF NOT EXISTS targets (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "type TEXT NOT NULL, " +
+                "name TEXT NOT NULL, " +
+                "problem_link TEXT, " +
+                "topic_name TEXT, " +
+                "website_url TEXT, " +
+                "status TEXT DEFAULT 'pending', " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                ")";
+
+        String createSettingsTable = "CREATE TABLE IF NOT EXISTS settings (" +
+                "key TEXT PRIMARY KEY, " +
+                "value TEXT" +
+                ")";
+
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(createUsersTable);
+            stmt.execute(createTargetsTable);
+            stmt.execute(createSettingsTable);
         }
     }
 

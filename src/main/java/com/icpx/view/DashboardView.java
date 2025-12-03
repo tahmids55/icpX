@@ -1,6 +1,7 @@
 package com.icpx.view;
 
 import com.icpx.database.UserDAO;
+import com.icpx.database.SettingsDAO;
 import com.icpx.model.User;
 import com.icpx.util.SceneManager;
 import javafx.geometry.Insets;
@@ -20,31 +21,38 @@ import javafx.scene.text.Text;
  */
 public class DashboardView {
     
+    private static BorderPane mainRoot;
+    private static ScrollPane contentScrollPane;
+
     public static Scene createScene() {
-        BorderPane root = new BorderPane();
-        root.getStyleClass().add(SceneManager.getCurrentTheme() + "-theme");
+        mainRoot = new BorderPane();
+        mainRoot.getStyleClass().add(SceneManager.getCurrentTheme() + "-theme");
 
         // Top Bar
         HBox topBar = createTopBar();
-        root.setTop(topBar);
+        mainRoot.setTop(topBar);
 
         // Sidebar
         VBox sidebar = createSidebar();
-        root.setLeft(sidebar);
+        mainRoot.setLeft(sidebar);
 
         // Content Area with ScrollPane
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setContent(createContentArea());
-        scrollPane.setFitToWidth(true);
-        scrollPane.getStyleClass().add("scroll-pane");
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        root.setCenter(scrollPane);
+        contentScrollPane = new ScrollPane();
+        contentScrollPane.setContent(createContentArea());
+        contentScrollPane.setFitToWidth(true);
+        contentScrollPane.getStyleClass().add("scroll-pane");
+        contentScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        contentScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        mainRoot.setCenter(contentScrollPane);
 
-        Scene scene = new Scene(root, 1000, 700);
+        Scene scene = new Scene(mainRoot, 1000, 700);
         scene.getStylesheets().add(DashboardView.class.getResource("/styles.css").toExternalForm());
         
         return scene;
+    }
+
+    private static void switchContent(VBox newContent) {
+        contentScrollPane.setContent(newContent);
     }
 
     private static HBox createTopBar() {
@@ -119,19 +127,27 @@ public class DashboardView {
         sidebarTitle.getStyleClass().add("label");
         sidebarTitle.setStyle("-fx-font-size: 16px;");
 
-        // Placeholder menu items
+        // Menu items
         Button dashboardBtn = new Button("📊 Dashboard");
         dashboardBtn.getStyleClass().addAll("button", "button-secondary");
         dashboardBtn.setPrefWidth(210);
+        dashboardBtn.setOnAction(e -> switchContent(createContentArea()));
+
+        Button targetsBtn = new Button("🎯 Target Section");
+        targetsBtn.getStyleClass().addAll("button", "button-secondary");
+        targetsBtn.setPrefWidth(210);
+        targetsBtn.setOnAction(e -> switchContent(TargetView.createTargetView()));
 
         Button settingsBtn = new Button("⚙️ Settings");
         settingsBtn.getStyleClass().addAll("button", "button-secondary");
         settingsBtn.setPrefWidth(210);
+        settingsBtn.setOnAction(e -> switchContent(createSettingsView()));
 
         sidebar.getChildren().addAll(
             sidebarTitle,
             new Separator(),
             dashboardBtn,
+            targetsBtn,
             settingsBtn
         );
 
@@ -207,43 +223,23 @@ public class DashboardView {
             settingsCard.setMaxWidth(500);
             settingsCard.setPadding(new Insets(20));
 
-            Text settingsTitle = new Text("Settings");
+            Text settingsTitle = new Text("Quick Settings");
             settingsTitle.getStyleClass().add("label");
             settingsTitle.setStyle("-fx-font-size: 18px;");
 
-            // Startup password toggle
-            CheckBox startupPasswordCheckbox = new CheckBox("Enable startup password");
-            startupPasswordCheckbox.getStyleClass().add("check-box");
-            if (user != null) {
-                startupPasswordCheckbox.setSelected(user.isStartupPasswordEnabled());
-            }
+            Button goToSettingsBtn = new Button("Go to Settings");
+            goToSettingsBtn.getStyleClass().addAll("button", "button-primary");
+            goToSettingsBtn.setOnAction(e -> switchContent(createSettingsView()));
+            goToSettingsBtn.setPrefWidth(200);
 
-            startupPasswordCheckbox.setOnAction(e -> {
-                try {
-                    boolean enabled = startupPasswordCheckbox.isSelected();
-                    UserDAO.toggleStartupPassword(enabled);
-                    
-                    // Show confirmation
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("Settings Updated");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Startup password has been " + (enabled ? "enabled" : "disabled"));
-                    alert.showAndWait();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    startupPasswordCheckbox.setSelected(!startupPasswordCheckbox.isSelected());
-                }
-            });
-
-            Text startupPasswordInfo = new Text("When enabled, you'll need to enter your password each time you open the app");
-            startupPasswordInfo.getStyleClass().add("subtitle");
-            startupPasswordInfo.setWrappingWidth(450);
+            Text settingsInfo = new Text("Configure Codeforces handle, startup password, and more");
+            settingsInfo.getStyleClass().add("subtitle");
 
             settingsCard.getChildren().addAll(
                 settingsTitle,
                 new Separator(),
-                startupPasswordCheckbox,
-                startupPasswordInfo
+                goToSettingsBtn,
+                settingsInfo
             );
 
             contentArea.getChildren().addAll(
@@ -473,5 +469,113 @@ public class DashboardView {
         logoPane.getChildren().addAll(background, bar1, bar2, centerDot);
         
         return logoPane;
+    }
+
+    private static VBox createSettingsView() {
+        VBox settingsView = new VBox(20);
+        settingsView.getStyleClass().add("content-area");
+        settingsView.setPadding(new Insets(30));
+
+        Text title = new Text("⚙️ Settings");
+        title.getStyleClass().add("title");
+
+        // Codeforces Handle Section
+        VBox cfHandleCard = new VBox(15);
+        cfHandleCard.getStyleClass().add("card");
+        cfHandleCard.setPadding(new Insets(20));
+        cfHandleCard.setMaxWidth(600);
+
+        Text cfHandleTitle = new Text("Codeforces Handle");
+        cfHandleTitle.getStyleClass().add("label");
+        cfHandleTitle.setStyle("-fx-font-size: 18px;");
+
+        HBox handleInputBox = new HBox(10);
+        handleInputBox.setAlignment(Pos.CENTER_LEFT);
+
+        TextField cfHandleField = new TextField();
+        cfHandleField.setPromptText("Enter your Codeforces handle");
+        cfHandleField.getStyleClass().add("text-field");
+        cfHandleField.setPrefWidth(300);
+
+        // Load saved handle
+        String savedHandle = SettingsDAO.getCodeforcesHandle();
+        if (savedHandle != null && !savedHandle.isEmpty()) {
+            cfHandleField.setText(savedHandle);
+        }
+
+        Button saveHandleBtn = new Button("Save Handle");
+        saveHandleBtn.getStyleClass().addAll("button", "button-primary");
+        saveHandleBtn.setOnAction(e -> {
+            String handle = cfHandleField.getText().trim();
+            if (!handle.isEmpty()) {
+                if (SettingsDAO.setCodeforcesHandle(handle)) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Success");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Codeforces handle saved successfully!");
+                    alert.showAndWait();
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Failed to save Codeforces handle");
+                    alert.showAndWait();
+                }
+            }
+        });
+
+        handleInputBox.getChildren().addAll(cfHandleField, saveHandleBtn);
+
+        Text cfHandleInfo = new Text("Required to check problem status automatically in Target Section");
+        cfHandleInfo.getStyleClass().add("subtitle");
+
+        cfHandleCard.getChildren().addAll(cfHandleTitle, new Separator(), handleInputBox, cfHandleInfo);
+
+        // Startup Password Section
+        VBox passwordCard = new VBox(15);
+        passwordCard.getStyleClass().add("card");
+        passwordCard.setMaxWidth(600);
+        passwordCard.setPadding(new Insets(20));
+
+        Text passwordTitle = new Text("Startup Password");
+        passwordTitle.getStyleClass().add("label");
+        passwordTitle.setStyle("-fx-font-size: 18px;");
+
+        CheckBox startupPasswordCheckbox = new CheckBox("Enable startup password");
+        startupPasswordCheckbox.getStyleClass().add("check-box");
+        
+        try {
+            User user = UserDAO.getCurrentUser();
+            if (user != null) {
+                startupPasswordCheckbox.setSelected(user.isStartupPasswordEnabled());
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        startupPasswordCheckbox.setOnAction(e -> {
+            try {
+                boolean enabled = startupPasswordCheckbox.isSelected();
+                UserDAO.toggleStartupPassword(enabled);
+                
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Settings Updated");
+                alert.setHeaderText(null);
+                alert.setContentText("Startup password has been " + (enabled ? "enabled" : "disabled"));
+                alert.showAndWait();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                startupPasswordCheckbox.setSelected(!startupPasswordCheckbox.isSelected());
+            }
+        });
+
+        Text passwordInfo = new Text("When enabled, you'll need to enter your password each time you open the app");
+        passwordInfo.getStyleClass().add("subtitle");
+
+        passwordCard.getChildren().addAll(passwordTitle, new Separator(), startupPasswordCheckbox, passwordInfo);
+
+        settingsView.getChildren().addAll(title, cfHandleCard, passwordCard);
+
+        return settingsView;
     }
 }
