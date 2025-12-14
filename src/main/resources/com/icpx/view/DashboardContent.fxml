@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<VBox fx:id="contentArea" spacing="20.0" styleClass="content-area" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.icpx.controller.DashboardContentController">
+   <padding>
+      <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+   </padding>
+   <children>
+      <Text fx:id="welcomeText" styleClass="title" text="Welcome!" />
+      <Text styleClass="subtitle" text="Track your competitive programming journey" />
+      <VBox prefHeight="10.0" />
+      <HBox fx:id="statsContainer" alignment="CENTER_LEFT" spacing="20.0" />
+      
+      <VBox maxWidth="1.7976931348623157E308" spacing="15.0" styleClass="card">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <children>
+            <Text style="-fx-font-size: 18px;" styleClass="label" text="Rating Graph" />
+            <Separator />
+            <VBox fx:id="ratingGraphContainer" alignment="CENTER" prefHeight="300.0" spacing="10.0" />
+         </children>
+      </VBox>
+      
+      <VBox maxWidth="1.7976931348623157E308" spacing="15.0" styleClass="card">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <children>
+            <Text style="-fx-font-size: 18px;" styleClass="label" text="Activity Heatmap" />
+            <Separator />
+            <VBox fx:id="heatmapContainer" alignment="CENTER_LEFT" spacing="10.0" />
+         </children>
+      </VBox>
+      
+      <VBox maxWidth="500.0" spacing="15.0" styleClass="card">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <children>
+            <Text style="-fx-font-size: 18px;" styleClass="label" text="Quick Settings" />
+            <Separator />
+            <Button onAction="#goToSettings" prefWidth="200.0" styleClass="button, button-primary" text="Go to Settings" />
+            <Text styleClass="subtitle" text="Configure Codeforces handle, startup password, and more" />
+         </children>
+      </VBox>
+   </children>
+</VBox>

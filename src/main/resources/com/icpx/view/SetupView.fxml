@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<VBox fx:id="root" alignment="CENTER" prefHeight="600.0" prefWidth="500.0" spacing="20.0" styleClass="container" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.icpx.controller.SetupController">
+   <children>
+      <VBox alignment="CENTER" maxWidth="400.0" spacing="20.0" styleClass="card">
+         <children>
+            <Text styleClass="title" text="Welcome to icpX" />
+            <Text styleClass="subtitle" text="Let's set up your account" />
+            
+            <VBox spacing="8.0">
+               <children>
+                  <Label styleClass="label" text="Username" />
+                  <TextField fx:id="usernameField" prefWidth="340.0" promptText="Enter your username" styleClass="text-field" />
+               </children>
+            </VBox>
+            
+            <VBox spacing="8.0">
+               <children>
+                  <Label styleClass="label" text="Password" />
+                  <PasswordField fx:id="passwordField" prefWidth="340.0" promptText="Enter your password" styleClass="password-field" />
+               </children>
+            </VBox>
+            
+            <VBox spacing="8.0">
+               <children>
+                  <Label styleClass="label" text="Confirm Password" />
+                  <PasswordField fx:id="confirmPasswordField" prefWidth="340.0" promptText="Confirm your password" styleClass="password-field" />
+               </children>
+            </VBox>
+            
+            <Label fx:id="errorLabel" styleClass="error-label" visible="false" />
+            
+            <Button fx:id="createButton" onAction="#handleCreateAccount" prefWidth="340.0" styleClass="button" text="Create Account" />
+         </children>
+      </VBox>
+   </children>
+</VBox>

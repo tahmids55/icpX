@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<BorderPane fx:id="mainRoot" prefHeight="700.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.icpx.controller.DashboardController">
+   <top>
+      <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="topbar" BorderPane.alignment="CENTER">
+         <padding>
+            <Insets bottom="16.0" left="24.0" right="24.0" top="16.0" />
+         </padding>
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                  <StackPane fx:id="logoContainer" />
+                  <Text styleClass="app-logo" text="icpX" />
+               </children>
+            </HBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <ToggleButton fx:id="themeToggle" onAction="#handleThemeToggle" styleClass="toggle-button" text="🌙 Dark" />
+            <Button fx:id="logoutButton" onAction="#handleLogout" styleClass="button, button-danger" text="Logout" />
+         </children>
+      </HBox>
+   </top>
+   <left>
+      <VBox prefWidth="250.0" spacing="15.0" styleClass="sidebar" BorderPane.alignment="CENTER">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <children>
+            <Text style="-fx-font-size: 16px;" styleClass="label" text="Navigation" />
+            <Separator />
+            <Button onAction="#showDashboard" prefWidth="210.0" styleClass="button, button-secondary" text="📊 Dashboard" />
+            <Button onAction="#showTargets" prefWidth="210.0" styleClass="button, button-secondary" text="🎯 Target Section" />
+            <Button onAction="#showSettings" prefWidth="210.0" styleClass="button, button-secondary" text="⚙️ Settings" />
+         </children>
+      </VBox>
+   </left>
+   <center>
+      <ScrollPane fx:id="contentScrollPane" fitToWidth="true" hbarPolicy="NEVER" styleClass="scroll-pane" vbarPolicy="AS_NEEDED" BorderPane.alignment="CENTER" />
+   </center>
+</BorderPane>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<VBox spacing="20.0" styleClass="content-area" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.icpx.controller.SettingsController">
+   <padding>
+      <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+   </padding>
+   <children>
+      <Text styleClass="title" text="⚙️ Settings" />
+      
+      <VBox maxWidth="600.0" spacing="15.0" styleClass="card">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <children>
+            <Text style="-fx-font-size: 18px;" styleClass="label" text="Codeforces Handle" />
+            <Separator />
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                  <TextField fx:id="cfHandleField" prefWidth="300.0" promptText="Enter your Codeforces handle" styleClass="text-field" />
+                  <Button onAction="#saveHandle" styleClass="button, button-primary" text="Save Handle" />
+               </children>
+            </HBox>
+            <Text styleClass="subtitle" text="Required to check problem status automatically in Target Section" />
+         </children>
+      </VBox>
+      
+      <VBox maxWidth="600.0" spacing="15.0" styleClass="card">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <children>
+            <Text style="-fx-font-size: 18px;" styleClass="label" text="Startup Password" />
+            <Separator />
+            <CheckBox fx:id="startupPasswordCheckbox" onAction="#toggleStartupPassword" styleClass="check-box" text="Enable startup password" />
+            <Text styleClass="subtitle" text="When enabled, you'll need to enter your password each time you open the app" />
+         </children>
+      </VBox>
+   </children>
+</VBox>
