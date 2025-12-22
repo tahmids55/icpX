@@ -8,7 +8,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -26,30 +25,20 @@ public class DashboardController {
     private ScrollPane contentScrollPane;
 
     @FXML
-    private ToggleButton themeToggle;
-
-    @FXML
     private StackPane logoContainer;
 
     @FXML
     public void initialize() {
-        // Initialize theme
-        mainRoot.getStyleClass().add(SceneManager.getCurrentTheme() + "-theme");
-        themeToggle.setSelected(SceneManager.getCurrentTheme().equals("dark"));
-        themeToggle.setText(themeToggle.isSelected() ? "☀️ Light" : "🌙 Dark");
-
         createLogo();
         showDashboard();
     }
 
     private void createLogo() {
         logoContainer.getChildren().clear();
-        // Determine current theme
-        boolean isDark = SceneManager.getCurrentTheme().equals("dark");
         
         // Background circle
         Circle background = new Circle(16);
-        background.setFill(isDark ? Color.web("#0e639c") : Color.web("#2563eb"));
+        background.setFill(Color.web("#2563eb"));
         
         // Create "X" shape using two rectangles rotated
         Rectangle bar1 = new Rectangle(18, 3);
@@ -62,23 +51,9 @@ public class DashboardController {
         
         // Create connection point (small circle at center)
         Circle centerDot = new Circle(3);
-        centerDot.setFill(isDark ? Color.web("#4fc3f7") : Color.web("#60a5fa"));
+        centerDot.setFill(Color.web("#60a5fa"));
         
         logoContainer.getChildren().addAll(background, bar1, bar2, centerDot);
-    }
-
-    @FXML
-    private void handleThemeToggle() {
-        String newTheme = themeToggle.isSelected() ? "dark" : "light";
-        SceneManager.setTheme(newTheme);
-        themeToggle.setText(themeToggle.isSelected() ? "☀️ Light" : "🌙 Dark");
-        
-        // Re-create logo
-        createLogo();
-        
-        // Reload current content to refresh its theme-dependent elements
-        // Ideally we track current view. For now, just reload dashboard.
-        showDashboard();
     }
 
     @FXML

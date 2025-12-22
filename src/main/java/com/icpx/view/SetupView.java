@@ -16,7 +16,7 @@ public class SetupView {
             VBox root = loader.load();
             
             Scene scene = new Scene(root);
-            scene.getStylesheets().add(SetupView.class.getResource("/styles.css").toExternalForm());
+            // scene.getStylesheets().add(SetupView.class.getResource("/styles.css").toExternalForm());
             
             return scene;
         } catch (IOException e) {

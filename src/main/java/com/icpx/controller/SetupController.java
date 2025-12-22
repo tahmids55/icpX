@@ -28,7 +28,7 @@ public class SetupController {
 
     @FXML
     public void initialize() {
-        root.getStyleClass().add(SceneManager.getCurrentTheme() + "-theme");
+        // Theme initialization removed
     }
 
     @FXML

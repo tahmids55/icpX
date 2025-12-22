@@ -2,16 +2,13 @@ package com.icpx.controller;
 
 import com.icpx.database.UserDAO;
 import com.icpx.model.User;
-import com.icpx.util.SceneManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -64,81 +61,147 @@ public class DashboardContentController {
         statsContainer.getChildren().addAll(solvedCard, topicsCard);
     }
 
-    private VBox createStatCard(String title, String value, String buttonText, javafx.event.EventHandler<javafx.event.ActionEvent> action) {
-        VBox card = new VBox(12);
-        card.getStyleClass().add("card");
-        card.setPadding(new Insets(20));
-        card.setPrefWidth(240);
-        card.setAlignment(Pos.CENTER);
-        
-        Text titleText = new Text(title);
-        titleText.getStyleClass().add("subtitle");
-        titleText.setWrappingWidth(220);
-        titleText.setStyle("-fx-text-alignment: center;");
-        
-        Text valueText = new Text(value);
-        valueText.getStyleClass().add("title");
-        valueText.setStyle("-fx-font-size: 48px;");
-        
-        Button actionButton = new Button(buttonText);
-        actionButton.getStyleClass().add("button");
-        actionButton.setOnAction(action);
-        actionButton.setPrefWidth(180);
-        
-        card.getChildren().addAll(titleText, valueText, actionButton);
-        return card;
+    private VBox createStatCard(String title, String value, String buttonText, javafx.event.EventHandler<javafx.event.ActionEvent> action){
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/icpx/view/StatCard.fxml"));
+            VBox card = loader.load();
+            StatCardController controller = loader.getController();
+            controller.setContent(title, value, buttonText, action);
+            return card;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new VBox();
+        }
     }
 
     private void createRatingGraph() {
-        boolean isDark = SceneManager.getCurrentTheme().equals("dark");
-        
-        Canvas canvas = new Canvas(800, 250);
+        // A canvas to draw the rating-over-time graph
+        Canvas canvas = new Canvas(840, 280);
         javafx.scene.canvas.GraphicsContext gc = canvas.getGraphicsContext2D();
-        
-        // Draw axes
-        gc.setStroke(isDark ? Color.web("#5a5a5a") : Color.web("#e2e8f0"));
+
+        // Axis positioning within the canvas
+        double axisLeft = 100;
+        double axisRight = 720;
+        double axisTop = 40;
+        double axisBottom = 240;
+        double axisHeight = axisBottom - axisTop;
+        double axisWidth = axisRight - axisLeft;
+
+        // Rating range we display on the vertical axis
+        double minRating = 0;
+        double maxRating = 600;
+
+        // Define visual tiers (bands) for rating ranges with colors and labels
+        RatingTier[] tiers = {
+                new RatingTier(0, 100, "Newbie", "#808080"),
+                new RatingTier(100, 200, "Pupil", "#008000"),
+                new RatingTier(200, 300, "Specialist", "#03a89e"),
+                new RatingTier(300, 400, "Expert", "#0000ff"),
+                new RatingTier(400, 500, "CandidateMaster", "#aa00ff"),
+                new RatingTier(500, 550, "Master", "#ff8c00"),
+                new RatingTier(550, 600, "Grandmaster", "#ff0000")
+        };
+
+        // Draw background bands for each rating tier
+        for (RatingTier tier : tiers) {
+            double bandStart = Math.max(tier.start, minRating);
+            double bandEnd = Math.min(tier.end, maxRating);
+            if (bandEnd <= bandStart) {
+                // Skip tiers outside of range
+                continue;
+            }
+
+            // Convert rating values to y coordinates on the canvas
+            double yStart = axisBottom - ((bandStart - minRating) / (maxRating - minRating)) * axisHeight;
+            double yEnd = axisBottom - ((bandEnd - minRating) / (maxRating - minRating)) * axisHeight;
+            double bandHeight = yStart - yEnd;
+
+            // Fill a semi-transparent colored rectangle for the tier band
+            gc.setFill(javafx.scene.paint.Color.web(tier.colorHex, 0.2));
+            gc.fillRect(axisLeft, yEnd, axisWidth, bandHeight);
+
+            // Draw the tier label to the right of the axis band
+            gc.setFill(javafx.scene.paint.Color.web(tier.colorHex));
+            gc.fillText(tier.label, axisRight + 20, yEnd + (bandHeight / 2) + 4);
+        }
+
+        // Y-axis tick values to show on the left
+        double[] yTicks = {0, 100, 200, 300, 400, 450, 500, 550, 600};
+
+        // Example X axis labels (months) and example data (ratings) for the plot
+        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"};
+        double[] ratings = {40, 120, 180, 260, 340, 430, 510, 580};
+
+        // Draw axes lines
         gc.setLineWidth(2);
-        
-        // Y-axis
-        gc.strokeLine(50, 20, 50, 230);
-        // X-axis
-        gc.strokeLine(50, 230, 780, 230);
-        
-        // Sample data
-        gc.setStroke(isDark ? Color.web("#4fc3f7") : Color.web("#2563eb"));
-        gc.setLineWidth(3);
-        
-        double[] xPoints = {50, 150, 250, 350, 450, 550, 650, 750};
-        double[] yPoints = {200, 180, 160, 140, 120, 100, 90, 80};
-        
-        for (int i = 0; i < xPoints.length - 1; i++) {
-            gc.strokeLine(xPoints[i], yPoints[i], xPoints[i + 1], yPoints[i + 1]);
-            gc.setFill(isDark ? Color.web("#4fc3f7") : Color.web("#2563eb"));
-            gc.fillOval(xPoints[i] - 4, yPoints[i] - 4, 8, 8);
-        }
-        gc.fillOval(xPoints[xPoints.length - 1] - 4, yPoints[yPoints.length - 1] - 4, 8, 8);
-        
-        // Draw grid lines
-        gc.setStroke(isDark ? Color.web("#3e3e42") : Color.web("#f1f5f9"));
+        gc.setStroke(Color.web("#e2e8f0"));
+        gc.strokeLine(axisLeft, axisTop, axisLeft, axisBottom);   // Y axis
+        gc.strokeLine(axisLeft, axisBottom, axisRight, axisBottom); // X axis
+
+        // Draw horizontal grid lines for each Y tick
+        gc.setStroke(Color.web("#f1f5f9"));
         gc.setLineWidth(1);
-        for (int i = 1; i < 6; i++) {
-            double y = 30 + i * 40;
-            gc.strokeLine(50, y, 780, y);
+        for (double tick : yTicks) {
+            double y = axisBottom - ((tick - minRating) / (maxRating - minRating)) * axisHeight;
+            gc.strokeLine(axisLeft, y, axisRight, y);
         }
-        
-        // Add labels
-        gc.setFill(isDark ? Color.web("#9d9d9d") : Color.web("#64748b"));
-        gc.fillText("Rating: 0 → 1500", 60, 250);
-        
+
+        // Draw vertical grid lines for each month tick
+        double xStep = axisWidth / (months.length - 1);
+        for (int i = 0; i < months.length; i++) {
+            double x = axisLeft + i * xStep;
+            gc.strokeLine(x, axisBottom, x, axisTop);
+        }
+
+        // Draw Y-axis labels (ratings)
+        gc.setFill(Color.web("#1f2937"));
+        for (double tick : yTicks) {
+            double y = axisBottom - ((tick - minRating) / (maxRating - minRating)) * axisHeight;
+            gc.fillText(String.valueOf((int) tick), axisLeft - 50, y + 4);
+        }
+
+        // Draw X-axis labels (months)
+        gc.setFill(Color.web("#1f2937"));
+        for (int i = 0; i < months.length; i++) {
+            double x = axisLeft + i * xStep;
+            gc.fillText(months[i], x - 12, axisBottom + 20);
+        }
+
+        // Draw the line representing rating progression
+        gc.setStroke(Color.web("#2563eb"));
+        gc.setLineWidth(3);
+        for (int i = 0; i < ratings.length - 1; i++) {
+            double x1 = axisLeft + i * xStep;
+            double y1 = axisBottom - ((ratings[i] - minRating) / (maxRating - minRating)) * axisHeight;
+            double x2 = axisLeft + (i + 1) * xStep;
+            double y2 = axisBottom - ((ratings[i + 1] - minRating) / (maxRating - minRating)) * axisHeight;
+            gc.strokeLine(x1, y1, x2, y2);
+        }
+
+        // Draw markers (dots) at each data point
+        gc.setFill(Color.web("#2563eb"));
+        for (int i = 0; i < ratings.length; i++) {
+            double x = axisLeft + i * xStep;
+            double y = axisBottom - ((ratings[i] - minRating) / (maxRating - minRating)) * axisHeight;
+            gc.fillOval(x - 4, y - 4, 8, 8);
+        }
+
+        // Axis titles
+        gc.setFill(Color.web("#1f2937"));
+        gc.fillText("Rating", axisLeft - 60, axisTop - 10);
+        gc.fillText("Months", (axisLeft + axisRight) / 2 - 30, axisBottom + 40);
+
+        // If there is no real data, show an informative text below the canvas
         Text noDataText = new Text("Start solving problems to see your rating progress!");
         noDataText.getStyleClass().add("subtitle");
         noDataText.setStyle("-fx-font-style: italic;");
-        
+
+        // Add the canvas and the hint text to the container in the UI
         ratingGraphContainer.getChildren().addAll(canvas, noDataText);
     }
 
     private void createHeatmap() {
-        boolean isDark = SceneManager.getCurrentTheme().equals("dark");
+        boolean isDark = false;
         
         GridPane grid = new GridPane();
         grid.setHgap(4);
@@ -223,6 +286,20 @@ public class DashboardContentController {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private static class RatingTier {
+        final double start;
+        final double end;
+        final String label;
+        final String colorHex;
+
+        RatingTier(double start, double end, String label, String colorHex) {
+            this.start = start;
+            this.end = end;
+            this.label = label;
+            this.colorHex = colorHex;
         }
     }
 }

@@ -6,6 +6,7 @@ import com.icpx.model.Target;
 import com.icpx.service.CodeforcesService;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -37,7 +38,7 @@ public class TargetController {
         refreshStats();
         refreshTargetList();
     }
-
+    
     private void refreshStats() {
         statsContainer.getChildren().clear();
         int pendingCount = TargetDAO.getTargetCountByStatus("pending");
@@ -52,21 +53,16 @@ public class TargetController {
     }
 
     private VBox createStatCard(String title, String value, String color) {
-        VBox card = new VBox(10);
-        card.getStyleClass().add("card");
-        card.setPadding(new Insets(20));
-        card.setPrefWidth(180);
-        card.setAlignment(Pos.CENTER);
-
-        Text titleText = new Text(title);
-        titleText.getStyleClass().add("subtitle");
-
-        Text valueText = new Text(value);
-        valueText.getStyleClass().add("title");
-        valueText.setStyle("-fx-font-size: 42px; -fx-fill: " + color + ";");
-
-        card.getChildren().addAll(titleText, valueText);
-        return card;
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/icpx/view/TargetStatCard.fxml"));
+            VBox card = loader.load();
+            TargetStatCardController controller = loader.getController();
+            controller.setContent(title, value, color);
+            return card;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new VBox();
+        }
     }
 
     private void refreshTargetList() {
@@ -86,246 +82,133 @@ public class TargetController {
     }
 
     private HBox createTargetCard(Target target) {
-        HBox card = new HBox(15);
-        card.getStyleClass().add("card");
-        card.setPadding(new Insets(15, 20, 15, 20));
-        card.setAlignment(Pos.CENTER_LEFT);
-
-        // Icon and Name
-        VBox nameSection = new VBox(5);
-        String icon = "problem".equals(target.getType()) ? "📝" : "📚";
-        Text nameText = new Text(icon + " " + target.getName());
-        nameText.getStyleClass().add("label");
-        nameText.setStyle("-fx-font-size: 16px;");
-
-        if ("topic".equals(target.getType()) && target.getTopicName() != null) {
-            Text topicText = new Text("Topic: " + target.getTopicName());
-            topicText.getStyleClass().add("subtitle");
-            nameSection.getChildren().addAll(nameText, topicText);
-        } else {
-            nameSection.getChildren().add(nameText);
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/icpx/view/TargetCard.fxml"));
+            HBox card = loader.load();
+            TargetCardController controller = loader.getController();
+            
+            controller.initialize(
+                target,
+                () -> openLink(target.getProblemLink()),
+                () -> checkProblemStatus(target),
+                () -> deleteTarget(target)
+            );
+            
+            return card;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new HBox();
         }
-        HBox.setHgrow(nameSection, Priority.ALWAYS);
-
-        // Status Label
-        Label statusLabel = new Label(target.getStatus().toUpperCase());
-        statusLabel.setPadding(new Insets(5, 10, 5, 10));
-        statusLabel.setStyle("-fx-background-radius: 5px; -fx-font-weight: bold;");
-        
-        switch (target.getStatus().toLowerCase()) {
-            case "achieved":
-                statusLabel.setStyle(statusLabel.getStyle() + "-fx-background-color: #4CAF50; -fx-text-fill: white;");
-                break;
-            case "failed":
-                statusLabel.setStyle(statusLabel.getStyle() + "-fx-background-color: #F44336; -fx-text-fill: white;");
-                break;
-            default:
-                statusLabel.setStyle(statusLabel.getStyle() + "-fx-background-color: #FFA726; -fx-text-fill: white;");
-        }
-
-        // Action Buttons
-        HBox buttonBox = new HBox(10);
-        buttonBox.setAlignment(Pos.CENTER_RIGHT);
-
-        if ("problem".equals(target.getType())) {
-            Button linkBtn = new Button("🔗 Link");
-            linkBtn.getStyleClass().addAll("button", "button-secondary");
-            linkBtn.setOnAction(e -> openLink(target.getProblemLink()));
-
-            Button checkBtn = new Button("✓ Check");
-            checkBtn.getStyleClass().addAll("button", "button-primary");
-            if ("achieved".equals(target.getStatus())) {
-                checkBtn.setDisable(true);
-            }
-            checkBtn.setOnAction(e -> checkProblemStatus(target));
-
-            buttonBox.getChildren().addAll(linkBtn, checkBtn);
-        }
-
-        Button deleteBtn = new Button("🗑");
-        deleteBtn.getStyleClass().addAll("button", "button-danger");
-        deleteBtn.setOnAction(e -> deleteTarget(target));
-
-        buttonBox.getChildren().add(deleteBtn);
-
-        card.getChildren().addAll(nameSection, statusLabel, buttonBox);
-        return card;
     }
 
     @FXML
     private void showAddProblemDialog() {
-        Dialog<Target> dialog = new Dialog<>();
-        dialog.setTitle("Add Problem Target");
-        dialog.setHeaderText("Add a new problem to track");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/icpx/view/AddProblemDialog.fxml"));
+            GridPane grid = loader.load();
+            AddProblemDialogController controller = loader.getController();
 
-        ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+            Dialog<Target> dialog = new Dialog<>();
+            dialog.setTitle("Add Problem Target");
+            dialog.setHeaderText("Add a new problem to track");
 
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20));
+            ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
+            dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+            dialog.getDialogPane().setContent(grid);
 
-        TextField nameField = new TextField();
-        nameField.setPromptText("Problem name");
-        TextField linkField = new TextField();
-        linkField.setPromptText("https://codeforces.com/...");
-
-        grid.add(new Label("Problem Name:"), 0, 0);
-        grid.add(nameField, 1, 0);
-        grid.add(new Label("Problem Link:"), 0, 1);
-        grid.add(linkField, 1, 1);
-
-        dialog.getDialogPane().setContent(grid);
-
-        Platform.runLater(nameField::requestFocus);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == addButtonType) {
-                String name = nameField.getText().trim();
-                String link = linkField.getText().trim();
-                
-                if (!name.isEmpty() && !link.isEmpty()) {
-                    Target target = new Target("problem", name);
-                    target.setProblemLink(link);
-                    return target;
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == addButtonType) {
+                    return controller.getResult();
                 }
-            }
-            return null;
-        });
+                return null;
+            });
 
-        Optional<Target> result = dialog.showAndWait();
-        result.ifPresent(target -> {
-            if (TargetDAO.insertTarget(target)) {
-                refreshTargetList();
-                refreshStats();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Problem target added!");
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to add target");
-            }
-        });
+            Optional<Target> result = dialog.showAndWait();
+            result.ifPresent(target -> {
+                if (TargetDAO.insertTarget(target)) {
+                    refreshTargetList();
+                    refreshStats();
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Problem target added!");
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to add target");
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to load dialog");
+        }
     }
 
     @FXML
     private void showAddTopicDialog() {
-        Dialog<Target> dialog = new Dialog<>();
-        dialog.setTitle("Add Topic Target");
-        dialog.setHeaderText("Add a new topic to learn");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/icpx/view/AddTopicDialog.fxml"));
+            GridPane grid = loader.load();
+            AddTopicDialogController controller = loader.getController();
 
-        ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+            Dialog<Target> dialog = new Dialog<>();
+            dialog.setTitle("Add Topic Target");
+            dialog.setHeaderText("Add a new topic to learn");
 
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20));
+            ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
+            dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+            dialog.getDialogPane().setContent(grid);
 
-        TextField topicField = new TextField();
-        topicField.setPromptText("e.g., Dynamic Programming");
-        TextField descField = new TextField();
-        descField.setPromptText("Description");
-        TextField urlField = new TextField();
-        urlField.setPromptText("Resource URL (optional)");
-
-        grid.add(new Label("Topic Name:"), 0, 0);
-        grid.add(topicField, 1, 0);
-        grid.add(new Label("Description:"), 0, 1);
-        grid.add(descField, 1, 1);
-        grid.add(new Label("Resource URL:"), 0, 2);
-        grid.add(urlField, 1, 2);
-
-        dialog.getDialogPane().setContent(grid);
-
-        Platform.runLater(topicField::requestFocus);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == addButtonType) {
-                String topic = topicField.getText().trim();
-                String desc = descField.getText().trim();
-                String url = urlField.getText().trim();
-                
-                if (!topic.isEmpty() && !desc.isEmpty()) {
-                    Target target = new Target("topic", desc);
-                    target.setTopicName(topic);
-                    target.setWebsiteUrl(url.isEmpty() ? null : url);
-                    return target;
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == addButtonType) {
+                    return controller.getResult();
                 }
-            }
-            return null;
-        });
+                return null;
+            });
 
-        Optional<Target> result = dialog.showAndWait();
-        result.ifPresent(target -> {
-            if (TargetDAO.insertTarget(target)) {
-                refreshTargetList();
-                refreshStats();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Topic target added!");
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to add target");
-            }
-        });
+            Optional<Target> result = dialog.showAndWait();
+            result.ifPresent(target -> {
+                if (TargetDAO.insertTarget(target)) {
+                    refreshTargetList();
+                    refreshStats();
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Topic target added!");
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to add target");
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to load dialog");
+        }
     }
 
     @FXML
     private void showImportContestDialog() {
-        Dialog<ContestImportConfig> dialog = new Dialog<>();
-        dialog.setTitle("Import Contest");
-        dialog.setHeaderText("Import problems from a Codeforces contest");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/icpx/view/ImportContestDialog.fxml"));
+            GridPane grid = loader.load();
+            ImportContestDialogController controller = loader.getController();
 
-        ButtonType importButtonType = new ButtonType("Import", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(importButtonType, ButtonType.CANCEL);
+            Dialog<ContestImportConfig> dialog = new Dialog<>();
+            dialog.setTitle("Import Contest");
+            dialog.setHeaderText("Import problems from a Codeforces contest");
 
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(15);
-        grid.setPadding(new Insets(20));
+            ButtonType importButtonType = new ButtonType("Import", ButtonBar.ButtonData.OK_DONE);
+            dialog.getDialogPane().getButtonTypes().addAll(importButtonType, ButtonType.CANCEL);
+            dialog.getDialogPane().setContent(grid);
 
-        TextField contestIdField = new TextField();
-        contestIdField.setPromptText("e.g., 1234");
-
-        // Problem range selection
-        ComboBox<String> fromProblemCombo = new ComboBox<>();
-        fromProblemCombo.getItems().addAll("A", "B", "C", "D", "E", "F", "G", "H", "I", "J");
-        fromProblemCombo.setValue("A");
-        fromProblemCombo.getStyleClass().add("combo-box");
-
-        ComboBox<String> toProblemCombo = new ComboBox<>();
-        toProblemCombo.getItems().addAll("A", "B", "C", "D", "E", "F", "G", "H", "I", "J");
-        toProblemCombo.setValue("E");
-        toProblemCombo.getStyleClass().add("combo-box");
-
-        HBox rangeBox = new HBox(10);
-        rangeBox.setAlignment(Pos.CENTER_LEFT);
-        rangeBox.getChildren().addAll(fromProblemCombo, new Label("to"), toProblemCombo);
-
-        grid.add(new Label("Contest ID:"), 0, 0);
-        grid.add(contestIdField, 1, 0);
-        grid.add(new Label("Problem Range:"), 0, 1);
-        grid.add(rangeBox, 1, 1);
-
-        Text infoText = new Text("Select which problems to import (e.g., A to E)");
-        infoText.setStyle("-fx-font-size: 11px; -fx-fill: gray;");
-        grid.add(infoText, 1, 2);
-
-        dialog.getDialogPane().setContent(grid);
-
-        Platform.runLater(contestIdField::requestFocus);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == importButtonType) {
-                String contestId = contestIdField.getText().trim();
-                String fromProblem = fromProblemCombo.getValue();
-                String toProblem = toProblemCombo.getValue();
-                
-                if (!contestId.isEmpty()) {
-                    return new ContestImportConfig(contestId, fromProblem, toProblem);
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == importButtonType && controller.isValid()) {
+                    return new ContestImportConfig(
+                        controller.getContestId(),
+                        controller.getFromProblem(),
+                        controller.getToProblem()
+                    );
                 }
-            }
-            return null;
-        });
+                return null;
+            });
 
-        Optional<ContestImportConfig> result = dialog.showAndWait();
-        result.ifPresent(config -> importContest(config.contestId, config.fromProblem, config.toProblem));
+            Optional<ContestImportConfig> result = dialog.showAndWait();
+            result.ifPresent(config -> importContest(config.contestId, config.fromProblem, config.toProblem));
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to load dialog");
+        }
     }
 
     private void importContest(String contestId, String fromProblem, String toProblem) {

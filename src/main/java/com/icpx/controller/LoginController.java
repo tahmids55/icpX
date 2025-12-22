@@ -21,8 +21,7 @@ public class LoginController {
 
     @FXML
     public void initialize() {
-        // Initialize theme
-        root.getStyleClass().add(SceneManager.getCurrentTheme() + "-theme");
+        // Theme initialization removed
     }
 
     @FXML

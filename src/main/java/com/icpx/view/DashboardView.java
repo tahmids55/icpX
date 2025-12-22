@@ -16,7 +16,7 @@ public class DashboardView {
             BorderPane root = loader.load();
             
             Scene scene = new Scene(root, 1000, 700);
-            scene.getStylesheets().add(DashboardView.class.getResource("/styles.css").toExternalForm());
+            // scene.getStylesheets().add(DashboardView.class.getResource("/styles.css").toExternalForm());
             
             return scene;
         } catch (IOException e) {

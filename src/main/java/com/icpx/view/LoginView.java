@@ -16,7 +16,7 @@ public class LoginView {
             VBox root = loader.load();
             
             Scene scene = new Scene(root);
-            scene.getStylesheets().add(LoginView.class.getResource("/styles.css").toExternalForm());
+            // scene.getStylesheets().add(LoginView.class.getResource("/styles.css").toExternalForm());
             
             return scene;
         } catch (IOException e) {

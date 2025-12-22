@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<VBox fx:controller="com.icpx.controller.TargetStatCardController" alignment="CENTER" spacing="10.0" prefWidth="180.0" styleClass="card" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+   <padding>
+      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+   </padding>
+   <children>
+      <Text fx:id="titleText" styleClass="subtitle" />
+      <Text fx:id="valueText" style="-fx-font-size: 42px;" styleClass="title" />
+   </children>
+</VBox>

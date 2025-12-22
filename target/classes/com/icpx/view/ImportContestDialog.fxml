@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+
+<GridPane xmlns="http://javafx.com/javafx"
+          xmlns:fx="http://javafx.com/fxml"
+          fx:controller="com.icpx.controller.ImportContestDialogController"
+          hgap="10" vgap="15">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <Label text="Contest ID:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+    <TextField fx:id="contestIdField" promptText="e.g., 1234" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+    <Label text="Problem Range:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+    <HBox fx:id="rangeBox" spacing="10" alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="1">
+        <ComboBox fx:id="fromProblemCombo" styleClass="combo-box"/>
+        <Label text="to"/>
+        <ComboBox fx:id="toProblemCombo" styleClass="combo-box"/>
+    </HBox>
+
+    <Text text="Select which problems to import (e.g., A to E)" 
+          style="-fx-font-size: 11px; -fx-fill: gray;" 
+          GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+</GridPane>
