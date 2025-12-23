@@ -31,9 +31,11 @@ public class TargetDAO {
             int affectedRows = pstmt.executeUpdate();
             
             if (affectedRows > 0) {
-                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        target.setId(generatedKeys.getInt(1));
+                // Get the last inserted row id for SQLite
+                try (Statement stmt = conn.createStatement();
+                     ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid()")) {
+                    if (rs.next()) {
+                        target.setId(rs.getInt(1));
                     }
                 }
                 return true;
