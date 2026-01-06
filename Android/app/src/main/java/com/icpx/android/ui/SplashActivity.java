@@ -6,8 +6,9 @@ import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.icpx.android.R;
-import com.icpx.android.database.UserDAO;
 
 /**
  * Splash screen activity
@@ -21,26 +22,16 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         new Handler().postDelayed(() -> {
-            // Check if user exists
-            UserDAO userDAO = new UserDAO(this);
-            boolean userExists = userDAO.userExists();
+            // Check if user is already logged in with Firebase
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
             Intent intent;
-            if (!userExists) {
-                // First run - show setup
-                intent = new Intent(SplashActivity.this, SetupActivity.class);
+            if (currentUser != null) {
+                // User is already logged in - go directly to dashboard
+                intent = new Intent(SplashActivity.this, MainActivity.class);
             } else {
-                // Check if login is required from settings
-                boolean requireLogin = getSharedPreferences("user_prefs", 0)
-                        .getBoolean("require_login", true);
-                
-                if (requireLogin) {
-                    // Show login screen
-                    intent = new Intent(SplashActivity.this, LoginActivity.class);
-                } else {
-                    // Skip login - go directly to dashboard
-                    intent = new Intent(SplashActivity.this, MainActivity.class);
-                }
+                // No user logged in - show login screen
+                intent = new Intent(SplashActivity.this, LoginActivity.class);
             }
 
             startActivity(intent);

@@ -15,6 +15,8 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.icpx.android.R;
 import com.icpx.android.database.UserDAO;
 import com.icpx.android.model.User;
@@ -22,6 +24,7 @@ import com.icpx.android.ui.fragments.DashboardFragment;
 import com.icpx.android.ui.fragments.HistoryFragment;
 import com.icpx.android.ui.fragments.SettingsFragment;
 import com.icpx.android.ui.fragments.TargetsFragment;
+import com.icpx.android.ui.fragments.ContestsFragment;
 
 /**
  * Main activity with navigation drawer
@@ -74,11 +77,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateUserInfo() {
-        User user = userDAO.getCurrentUser();
-        if (user != null) {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser != null) {
             TextView usernameTextView = navigationView.getHeaderView(0)
                     .findViewById(R.id.usernameTextView);
-            usernameTextView.setText(user.getUsername());
+            String displayText = firebaseUser.getDisplayName() != null ? 
+                    firebaseUser.getDisplayName() : firebaseUser.getEmail();
+            usernameTextView.setText(displayText);
         }
     }
 
@@ -100,6 +105,8 @@ public class MainActivity extends AppCompatActivity
             loadFragment(new DashboardFragment());
         } else if (itemId == R.id.nav_targets) {
             loadFragment(new TargetsFragment());
+        } else if (itemId == R.id.nav_contests) {
+            loadFragment(new ContestsFragment());
         } else if (itemId == R.id.nav_history) {
             loadFragment(new HistoryFragment());
         } else if (itemId == R.id.nav_settings) {
@@ -113,6 +120,10 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void handleLogout() {
+        // Sign out from Firebase
+        FirebaseAuth.getInstance().signOut();
+        
+        // Navigate to login screen and clear the back stack
         Intent intent = new Intent(MainActivity.this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

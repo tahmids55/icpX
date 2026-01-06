@@ -16,6 +16,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.icpx.android.R;
 import com.icpx.android.database.TargetDAO;
 import com.icpx.android.model.Target;
@@ -58,8 +60,14 @@ public class HistoryFragment extends Fragment {
     }
 
     private void loadHistory() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null || currentUser.getEmail() == null) {
+            return;
+        }
+        String userEmail = currentUser.getEmail();
+        
         new Thread(() -> {
-            List<Target> allTargets = targetDAO.getTargetsByStatus("achieved");
+            List<Target> allTargets = targetDAO.getTargetsByStatus("achieved", userEmail);
             // Filter to show only problems (not topics)
             List<Target> problems = new ArrayList<>();
             for (Target target : allTargets) {

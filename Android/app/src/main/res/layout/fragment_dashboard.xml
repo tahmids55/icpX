@@ -26,6 +26,214 @@
             android:nestedScrollingEnabled="false"
             android:layout_marginBottom="24dp"/>
 
+        <!-- Activity Heatmap -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Activity"
+            style="@style/TitleMedium"
+            android:layout_marginBottom="8dp"/>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:layout_marginBottom="16dp">
+
+            <com.icpx.android.ui.views.ActivityHeatmapView
+                android:id="@+id/activityHeatmap"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </HorizontalScrollView>
+
+        <!-- Legend for heatmap -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_marginBottom="24dp">
+
+            <View
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:background="@color/heatmapGreen"
+                android:layout_marginEnd="4dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Problems"
+                android:textSize="10sp"
+                android:layout_marginEnd="12dp"
+                style="@style/BodySmall"/>
+
+            <View
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:background="@color/heatmapRed"
+                android:layout_marginEnd="4dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Topics"
+                android:textSize="10sp"
+                android:layout_marginEnd="12dp"
+                style="@style/BodySmall"/>
+
+            <View
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:background="@color/heatmapOrange"
+                android:layout_marginEnd="4dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Both"
+                android:textSize="10sp"
+                style="@style/BodySmall"/>
+
+        </LinearLayout>
+
+        <!-- Rating Graph -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rating Progress"
+            style="@style/TitleMedium"
+            android:layout_marginBottom="8dp"/>
+
+        <androidx.cardview.widget.CardView
+            style="@style/CardStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp">
+
+            <com.icpx.android.ui.views.RatingGraphView
+                android:id="@+id/ratingGraph"
+                android:layout_width="match_parent"
+                android:layout_height="280dp"
+                android:padding="8dp"/>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Rating Colors Legend -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="24dp">
+
+            <!-- Row 1 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginBottom="8dp">
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:background="@color/ratingNewbie"
+                    android:layout_marginEnd="4dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Newbie"
+                    android:textSize="11sp"
+                    android:layout_marginEnd="16dp"
+                    style="@style/BodySmall"/>
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:background="@color/ratingPupil"
+                    android:layout_marginEnd="4dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pupil"
+                    android:textSize="11sp"
+                    android:layout_marginEnd="16dp"
+                    style="@style/BodySmall"/>
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:background="@color/ratingSpecialist"
+                    android:layout_marginEnd="4dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Specialist"
+                    android:textSize="11sp"
+                    android:layout_marginEnd="16dp"
+                    style="@style/BodySmall"/>
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:background="@color/ratingExpert"
+                    android:layout_marginEnd="4dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Expert"
+                    android:textSize="11sp"
+                    style="@style/BodySmall"/>
+
+            </LinearLayout>
+
+            <!-- Row 2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:background="@color/ratingCandidateMaster"
+                    android:layout_marginEnd="4dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CM"
+                    android:textSize="11sp"
+                    android:layout_marginEnd="16dp"
+                    style="@style/BodySmall"/>
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:background="@color/ratingMaster"
+                    android:layout_marginEnd="4dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Master"
+                    android:textSize="11sp"
+                    android:layout_marginEnd="16dp"
+                    style="@style/BodySmall"/>
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:background="@color/ratingGrandmaster"
+                    android:layout_marginEnd="4dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Grandmaster"
+                    android:textSize="11sp"
+                    style="@style/BodySmall"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
         <!-- Recent Activity -->
         <LinearLayout
             android:layout_width="match_parent"

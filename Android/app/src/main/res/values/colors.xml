@@ -40,4 +40,20 @@
     <!-- Gradient Colors -->
     <color name="gradientStart">#667eea</color>
     <color name="gradientEnd">#764ba2</color>
+
+    <!-- Codeforces Rating Colors -->
+    <color name="ratingNewbie">#808080</color>          <!-- Gray -->
+    <color name="ratingPupil">#008000</color>           <!-- Green -->
+    <color name="ratingSpecialist">#03A89E</color>      <!-- Cyan -->
+    <color name="ratingExpert">#0000FF</color>          <!-- Blue -->
+    <color name="ratingCandidateMaster">#AA00AA</color> <!-- Violet -->
+    <color name="ratingMaster">#FF8C00</color>          <!-- Orange -->
+    <color name="ratingGrandmaster">#FF0000</color>     <!-- Red -->
+    <color name="ratingLegendary">#FF0000</color>       <!-- Red (for 3000+) -->
+
+    <!-- Heatmap Colors -->
+    <color name="heatmapEmpty">#EBEDF0</color>          <!-- Light gray for no activity -->
+    <color name="heatmapGreen">#40C463</color>          <!-- Green for problems solved -->
+    <color name="heatmapRed">#FF5252</color>            <!-- Red for topics learned -->
+    <color name="heatmapOrange">#FF9800</color>         <!-- Orange for both activities -->
 </resources>

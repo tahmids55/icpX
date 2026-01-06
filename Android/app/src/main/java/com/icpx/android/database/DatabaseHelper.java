@@ -10,7 +10,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
     
     private static final String DATABASE_NAME = "icpx.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     // Table names
     public static final String TABLE_USERS = "users";
@@ -26,6 +26,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_CREATED_AT = "created_at";
 
     // Target table columns
+    public static final String COLUMN_USER_EMAIL = "user_email";
     public static final String COLUMN_TYPE = "type";
     public static final String COLUMN_NAME = "name";
     public static final String COLUMN_PROBLEM_LINK = "problem_link";
@@ -68,6 +69,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // Create targets table
         String createTargetsTable = "CREATE TABLE " + TABLE_TARGETS + " (" +
                 COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                COLUMN_USER_EMAIL + " TEXT NOT NULL, " +
                 COLUMN_TYPE + " TEXT NOT NULL, " +
                 COLUMN_NAME + " TEXT NOT NULL, " +
                 COLUMN_PROBLEM_LINK + " TEXT, " +
@@ -95,7 +97,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             // Add deleted column to targets table
             db.execSQL("ALTER TABLE " + TABLE_TARGETS + " ADD COLUMN " + COLUMN_DELETED + " INTEGER DEFAULT 0");
         }
-        if (oldVersion < newVersion && newVersion > 2) {
+        if (oldVersion < 3 && newVersion >= 3) {
+            // Add user_email column to targets table
+            db.execSQL("ALTER TABLE " + TABLE_TARGETS + " ADD COLUMN " + COLUMN_USER_EMAIL + " TEXT DEFAULT ''");
+        }
+        if (oldVersion < newVersion && newVersion > 3) {
             // For future upgrades, handle here
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_TARGETS);

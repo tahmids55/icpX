@@ -210,4 +210,33 @@ public class CodeforcesService {
 
         return false;
     }
+
+    /**
+     * Fetch contests from Codeforces API
+     * @param gym if true, includes gym contests
+     * @return JSONArray of contests
+     */
+    public JSONArray fetchContests(boolean gym) throws Exception {
+        String urlString = API_BASE_URL + "contest.list?gym=" + gym;
+        URL url = new URL(urlString);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setConnectTimeout(10000);
+        conn.setReadTimeout(10000);
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        reader.close();
+
+        JSONObject jsonResponse = new JSONObject(response.toString());
+        if (!jsonResponse.getString("status").equals("OK")) {
+            throw new Exception("API returned error status");
+        }
+
+        return jsonResponse.getJSONArray("result");
+    }
 }

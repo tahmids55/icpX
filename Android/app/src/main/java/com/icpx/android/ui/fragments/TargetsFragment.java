@@ -16,9 +16,12 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.icpx.android.R;
 import com.icpx.android.adapters.TargetAdapter;
 import com.icpx.android.database.TargetDAO;
+import com.icpx.android.firebase.FirebaseManager;
 import com.icpx.android.model.Target;
 import com.icpx.android.service.CodeforcesService;
 import com.icpx.android.ui.dialogs.AddProblemDialog;
@@ -112,13 +115,27 @@ public class TargetsFragment extends Fragment {
     private void loadTargets() {
         swipeRefreshLayout.setRefreshing(true);
         
+        // Get current user email
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            requireActivity().runOnUiThread(() -> {
+                swipeRefreshLayout.setRefreshing(false);
+                Toast.makeText(requireContext(), "Please log in", Toast.LENGTH_SHORT).show();
+            });
+            return;
+        }
+        
+        final String userEmail = currentUser.getEmail();
+        android.util.Log.d("TargetsFragment", "Loading targets for user: " + userEmail);
+        
         new Thread(() -> {
             List<Target> targets;
             
             if ("all".equals(currentFilter)) {
-                targets = targetDAO.getAllTargets();
+                targets = targetDAO.getAllTargets(userEmail);
+                android.util.Log.d("TargetsFragment", "Loaded " + targets.size() + " targets for " + userEmail);
             } else {
-                targets = targetDAO.getTargetsByStatus(currentFilter);
+                targets = targetDAO.getTargetsByStatus(currentFilter, userEmail);
             }
 
             requireActivity().runOnUiThread(() -> {
@@ -153,6 +170,8 @@ public class TargetsFragment extends Fragment {
     }
 
     private void deleteTarget(Target target) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        
         new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                 .setTitle("Delete Target")
                 .setMessage("Are you sure you want to delete \"" + target.getName() + "\"?")
@@ -166,6 +185,20 @@ public class TargetsFragment extends Fragment {
                             // Hard delete for non-achieved targets
                             targetDAO.deleteTarget(target.getId());
                         }
+                        
+                        // Auto-sync deletion to Firebase
+                        if (currentUser != null) {
+                            FirebaseManager.getInstance().deleteTarget(currentUser.getUid(), 
+                                    String.valueOf(target.getId()), 
+                                    new FirebaseManager.FirestoreCallback() {
+                                        @Override
+                                        public void onSuccess() {}
+                                        
+                                        @Override
+                                        public void onFailure(Exception e) {}
+                                    });
+                        }
+                        
                         requireActivity().runOnUiThread(() -> {
                             Toast.makeText(requireContext(), "Target deleted", Toast.LENGTH_SHORT).show();
                             loadTargets();
@@ -184,8 +217,14 @@ public class TargetsFragment extends Fragment {
             return;
         }
 
-        // Get Codeforces handle from SharedPreferences
-        String cfHandle = requireActivity().getSharedPreferences("user_prefs", 0)
+        // Get Codeforces handle from user-specific SharedPreferences
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null || currentUser.getEmail() == null) {
+            Toast.makeText(requireContext(), "Please log in", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String prefKey = "user_prefs_" + currentUser.getEmail();
+        String cfHandle = requireActivity().getSharedPreferences(prefKey, 0)
                 .getString("codeforces_handle", "");
 
         if (cfHandle.isEmpty()) {
@@ -279,8 +318,23 @@ public class TargetsFragment extends Fragment {
     private void showAddProblemDialog() {
         AddProblemDialog dialog = new AddProblemDialog(requireContext(), target -> {
             // Add target to database
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                Toast.makeText(requireContext(), "Please log in", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            final String userEmail = currentUser.getEmail();
+            android.util.Log.d("TargetsFragment", "Creating target for user: " + userEmail);
             new Thread(() -> {
-                long id = targetDAO.createTarget(target);
+                long id = targetDAO.createTarget(target, userEmail);
+                android.util.Log.d("TargetsFragment", "Created target with ID: " + id + " for user: " + userEmail);
+                
+                // Auto-sync to Firebase
+                if (id > 0) {
+                    syncTargetToFirebase(target, currentUser.getUid());
+                }
+                
                 requireActivity().runOnUiThread(() -> {
                     if (id > 0) {
                         Toast.makeText(requireContext(), R.string.target_added, 
@@ -297,9 +351,17 @@ public class TargetsFragment extends Fragment {
     }
 
     private void updateTargetStatus(Target target, String newStatus) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        
         new Thread(() -> {
             target.setStatus(newStatus);
             targetDAO.updateTarget(target);
+            
+            // Auto-sync to Firebase
+            if (currentUser != null) {
+                syncTargetToFirebase(target, currentUser.getUid());
+            }
+            
             requireActivity().runOnUiThread(() -> {
                 String message = "";
                 switch (newStatus) {
@@ -317,6 +379,36 @@ public class TargetsFragment extends Fragment {
                 loadTargets();
             });
         }).start();
+    }
+    
+    /**
+     * Helper method to sync a target to Firebase
+     */
+    private void syncTargetToFirebase(Target target, String userId) {
+        java.util.Map<String, Object> targetData = new java.util.HashMap<>();
+        targetData.put("id", String.valueOf(target.getId()));
+        targetData.put("type", target.getType());
+        targetData.put("name", target.getName());
+        targetData.put("problemLink", target.getProblemLink());
+        targetData.put("topicName", target.getTopicName());
+        targetData.put("websiteUrl", target.getWebsiteUrl());
+        targetData.put("status", target.getStatus());
+        targetData.put("rating", target.getRating());
+        targetData.put("deleted", target.isDeleted());
+        targetData.put("createdAt", target.getCreatedAt().getTime());
+        
+        FirebaseManager.getInstance().saveTarget(userId, targetData, 
+            new FirebaseManager.FirestoreCallback() {
+                @Override
+                public void onSuccess() {
+                    // Silently succeed
+                }
+                
+                @Override
+                public void onFailure(Exception e) {
+                    // Silently fail, user can manually sync later if needed
+                }
+            });
     }
 
     @Override

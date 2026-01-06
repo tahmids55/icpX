@@ -40,11 +40,26 @@ public class StatCardAdapter extends RecyclerView.Adapter<StatCardAdapter.ViewHo
         
         holder.titleTextView.setText(statCard.getTitle());
         holder.valueTextView.setText(statCard.getValue());
-        holder.iconTextView.setText(statCard.getIcon());
         
-        // Set icon background color
-        int color = holder.itemView.getContext().getColor(statCard.getColorResId());
-        holder.iconTextView.setBackgroundColor(color);
+        // Hide icon if empty, otherwise show it
+        if (statCard.getIcon() == null || statCard.getIcon().isEmpty()) {
+            holder.iconTextView.setVisibility(View.GONE);
+        } else {
+            holder.iconTextView.setVisibility(View.VISIBLE);
+            holder.iconTextView.setText(statCard.getIcon());
+            
+            // Set icon background color
+            int color = holder.itemView.getContext().getColor(statCard.getColorResId());
+            holder.iconTextView.setBackgroundColor(color);
+        }
+        
+        // Set value text color for CF Rating
+        if ("CF Rating".equals(statCard.getTitle())) {
+            int color = holder.itemView.getContext().getColor(statCard.getColorResId());
+            holder.valueTextView.setTextColor(color);
+        } else {
+            holder.valueTextView.setTextColor(holder.itemView.getContext().getColor(R.color.textPrimary));
+        }
     }
 
     @Override

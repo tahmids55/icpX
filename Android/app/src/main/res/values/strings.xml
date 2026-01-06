@@ -13,6 +13,9 @@
     <string name="error">Error</string>
     <string name="success">Success</string>
     
+    <!-- Firebase -->
+    <string name="default_web_client_id">924198752370-qjv83kdj1epsgc65eekut3kl8uofdc87.apps.googleusercontent.com</string>
+    
     <!-- Login & Setup -->
     <string name="welcome_to_icpx">Welcome to icpX</string>
     <string name="login_title">Login</string>

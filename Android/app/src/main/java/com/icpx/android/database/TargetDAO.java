@@ -7,9 +7,13 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.icpx.android.model.Target;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * Data Access Object for Target operations
@@ -25,9 +29,10 @@ public class TargetDAO {
     /**
      * Create a new target
      */
-    public long createTarget(Target target) {
+    public long createTarget(Target target, String userEmail) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(DatabaseHelper.COLUMN_USER_EMAIL, userEmail);
         values.put(DatabaseHelper.COLUMN_TYPE, target.getType());
         values.put(DatabaseHelper.COLUMN_NAME, target.getName());
         values.put(DatabaseHelper.COLUMN_PROBLEM_LINK, target.getProblemLink());
@@ -42,20 +47,22 @@ public class TargetDAO {
     }
 
     /**
-     * Get all targets
+     * Get all targets for a specific user
      */
-    public List<Target> getAllTargets() {
+    public List<Target> getAllTargets(String userEmail) {
+        android.util.Log.d("TargetDAO", "getAllTargets called with userEmail: " + userEmail);
         List<Target> targets = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(
                 DatabaseHelper.TABLE_TARGETS,
                 null,
-                DatabaseHelper.COLUMN_DELETED + " = 0",
-                null,
+                DatabaseHelper.COLUMN_DELETED + " = 0 AND " + DatabaseHelper.COLUMN_USER_EMAIL + " = ?",
+                new String[]{userEmail},
                 null,
                 null,
                 DatabaseHelper.COLUMN_CREATED_AT + " DESC"
         );
+        android.util.Log.d("TargetDAO", "Query returned " + cursor.getCount() + " rows");
 
         while (cursor.moveToNext()) {
             targets.add(cursorToTarget(cursor));
@@ -65,16 +72,16 @@ public class TargetDAO {
     }
 
     /**
-     * Get targets by status
+     * Get targets by status for a specific user
      */
-    public List<Target> getTargetsByStatus(String status) {
+    public List<Target> getTargetsByStatus(String status, String userEmail) {
         List<Target> targets = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(
                 DatabaseHelper.TABLE_TARGETS,
                 null,
-                DatabaseHelper.COLUMN_STATUS + " = ? AND " + DatabaseHelper.COLUMN_DELETED + " = 0",
-                new String[]{status},
+                DatabaseHelper.COLUMN_STATUS + " = ? AND " + DatabaseHelper.COLUMN_DELETED + " = 0 AND " + DatabaseHelper.COLUMN_USER_EMAIL + " = ?",
+                new String[]{status, userEmail},
                 null,
                 null,
                 DatabaseHelper.COLUMN_CREATED_AT + " DESC"
@@ -108,6 +115,29 @@ public class TargetDAO {
         }
         cursor.close();
         return targets;
+    }
+
+    /**
+     * Get target by ID
+     */
+    public Target getTargetById(int id) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(
+                DatabaseHelper.TABLE_TARGETS,
+                null,
+                DatabaseHelper.COLUMN_ID + " = ?",
+                new String[]{String.valueOf(id)},
+                null,
+                null,
+                null
+        );
+
+        Target target = null;
+        if (cursor.moveToFirst()) {
+            target = cursorToTarget(cursor);
+        }
+        cursor.close();
+        return target;
     }
 
     /**
@@ -185,14 +215,15 @@ public class TargetDAO {
     }
 
     /**
-     * Get count by status
+     * Get count by status for a specific user
      */
-    public int getCountByStatus(String status) {
+    public int getCountByStatus(String status, String userEmail) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.rawQuery(
                 "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_TARGETS +
-                        " WHERE " + DatabaseHelper.COLUMN_STATUS + " = ?",
-                new String[]{status}
+                        " WHERE " + DatabaseHelper.COLUMN_STATUS + " = ? AND " +
+                        DatabaseHelper.COLUMN_USER_EMAIL + " = ?",
+                new String[]{status, userEmail}
         );
         int count = 0;
         if (cursor.moveToFirst()) {
@@ -242,5 +273,60 @@ public class TargetDAO {
         target.setDeleted(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_DELETED)) == 1);
         target.setCreatedAt(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CREATED_AT))));
         return target;
+    }
+
+    /**
+     * Get activity data for heatmap - returns count of problems solved per date
+     */
+    public Map<String, Integer> getProblemActivityByDate(String userEmail) {
+        Map<String, Integer> activityMap = new HashMap<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+
+        String query = "SELECT " + DatabaseHelper.COLUMN_CREATED_AT + " FROM " + DatabaseHelper.TABLE_TARGETS +
+                " WHERE " + DatabaseHelper.COLUMN_USER_EMAIL + " = ? AND " +
+                DatabaseHelper.COLUMN_TYPE + " = 'problem' AND " +
+                DatabaseHelper.COLUMN_STATUS + " = 'achieved' AND " +
+                DatabaseHelper.COLUMN_DELETED + " = 0";
+
+        Cursor cursor = db.rawQuery(query, new String[]{userEmail});
+
+        if (cursor.moveToFirst()) {
+            do {
+                long timestamp = cursor.getLong(0);
+                String dateStr = dateFormat.format(new Date(timestamp));
+                activityMap.put(dateStr, activityMap.getOrDefault(dateStr, 0) + 1);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        return activityMap;
+    }
+
+    /**
+     * Get activity data for heatmap - returns count of topics learned per date
+     */
+    public Map<String, Integer> getTopicActivityByDate(String userEmail) {
+        Map<String, Integer> activityMap = new HashMap<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+
+        String query = "SELECT " + DatabaseHelper.COLUMN_CREATED_AT + " FROM " + DatabaseHelper.TABLE_TARGETS +
+                " WHERE " + DatabaseHelper.COLUMN_USER_EMAIL + " = ? AND " +
+                DatabaseHelper.COLUMN_TYPE + " = 'topic' AND " +
+                DatabaseHelper.COLUMN_DELETED + " = 0";
+
+        Cursor cursor = db.rawQuery(query, new String[]{userEmail});
+
+        if (cursor.moveToFirst()) {
+            do {
+                long timestamp = cursor.getLong(0);
+                String dateStr = dateFormat.format(new Date(timestamp));
+                activityMap.put(dateStr, activityMap.getOrDefault(dateStr, 0) + 1);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        return activityMap;
     }
 }

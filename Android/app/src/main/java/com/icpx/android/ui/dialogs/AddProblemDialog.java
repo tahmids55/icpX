@@ -66,6 +66,7 @@ public class AddProblemDialog extends Dialog {
     private OnProblemAddedListener listener;
     private CodeforcesService codeforcesService;
     private String currentMode = "link"; // link, contest, topic
+    private String prefilledContestId = null;
     
     // Store fetched data from contest
     private String fetchedContestName = "";
@@ -80,6 +81,14 @@ public class AddProblemDialog extends Dialog {
         super(context);
         this.listener = listener;
         this.codeforcesService = new CodeforcesService();
+    }
+
+    public AddProblemDialog(@NonNull Context context, OnProblemAddedListener listener, String contestId) {
+        super(context);
+        this.listener = listener;
+        this.codeforcesService = new CodeforcesService();
+        this.prefilledContestId = contestId;
+        this.currentMode = "contest";
     }
 
     @Override
@@ -100,6 +109,16 @@ public class AddProblemDialog extends Dialog {
 
         initViews();
         setupListeners();
+        
+        // If contest ID was provided, auto-select contest tab and fill in the ID
+        if (prefilledContestId != null) {
+            TabLayout.Tab contestTab = inputMethodTabs.getTabAt(1);
+            if (contestTab != null) {
+                contestTab.select();
+            }
+            showContestLayout();
+            contestIdEditText.setText(prefilledContestId);
+        }
     }
 
     private void initViews() {
