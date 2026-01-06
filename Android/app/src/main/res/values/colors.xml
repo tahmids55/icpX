@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors -->
+    <color name="colorPrimary">#2196F3</color>
+    <color name="colorPrimaryDark">#1976D2</color>
+    <color name="colorAccent">#FF4081</color>
+
+    <!-- Background Colors -->
+    <color name="backgroundColor">#F5F7FA</color>
+    <color name="cardBackground">#FFFFFF</color>
+    <color name="darkBackground">#1E1E1E</color>
+    <color name="darkCardBackground">#2D2D2D</color>
+
+    <!-- Text Colors -->
+    <color name="textPrimary">#212121</color>
+    <color name="textSecondary">#757575</color>
+    <color name="textHint">#BDBDBD</color>
+    <color name="textLight">#FFFFFF</color>
+
+    <!-- Status Colors -->
+    <color name="statusPending">#FF9800</color>
+    <color name="statusAchieved">#4CAF50</color>
+    <color name="statusFailed">#F44336</color>
+
+    <!-- Stat Card Colors -->
+    <color name="statBlue">#2196F3</color>
+    <color name="statGreen">#4CAF50</color>
+    <color name="statOrange">#FF9800</color>
+    <color name="statPurple">#9C27B0</color>
+    <color name="statRed">#F44336</color>
+
+    <!-- Utility Colors -->
+    <color name="divider">#E0E0E0</color>
+    <color name="ripple">#1F000000</color>
+    <color name="shadowColor">#1A000000</color>
+    <color name="transparent">#00000000</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Gradient Colors -->
+    <color name="gradientStart">#667eea</color>
+    <color name="gradientEnd">#764ba2</color>
+</resources>

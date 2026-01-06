@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<GridPane xmlns="http://javafx.com/javafx"
+          xmlns:fx="http://javafx.com/fxml"
+          fx:controller="com.icpx.controller.AddProblemDialogController"
+          hgap="10" vgap="10">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <Label text="Problem Link:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+    <TextField fx:id="linkField" promptText="https://codeforces.com/..." GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+    <Label text="Problem Name:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+    <TextField fx:id="nameField" promptText="Auto-fetched from link" GridPane.columnIndex="1" GridPane.rowIndex="1" editable="false"/>
+
+    <Label text="Rating:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+    <TextField fx:id="ratingField" promptText="Auto-fetched from link" GridPane.columnIndex="1" GridPane.rowIndex="2" editable="false"/>
+
+    <Label fx:id="statusLabel" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2"/>
+</GridPane>

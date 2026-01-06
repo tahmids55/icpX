@@ -1,0 +1,15 @@
+# Desktop (Java/Maven)
+Desktop/.idea/
+Desktop/target/
+Desktop/*.iml
+Desktop/*.db
+
+# Android
+Android/.gradle/
+Android/.idea/
+Android/local.properties
+Android/build/
+Android/app/build/
+Android/*.iml
+Android/*.log
+Android/.DS_Store
