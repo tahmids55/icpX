@@ -45,6 +45,26 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- Problem WebView Activity -->
+        <activity
+            android:name=".ui.ProblemWebViewActivity"
+            android:exported="false"
+            android:hardwareAccelerated="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:parentActivityName=".ui.MainActivity" />
+
+        <!-- Problem Native Activity -->
+        <activity
+            android:name=".ui.ProblemNativeActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.MainActivity" />
+
+        <!-- Problem Tabbed Activity -->
+        <activity
+            android:name=".ui.ProblemTabbedActivity"
+            android:exported="false"
+            android:hardwareAccelerated="true"
+            android:parentActivityName=".ui.MainActivity" />
 
     </application>
 

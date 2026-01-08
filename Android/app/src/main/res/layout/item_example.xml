@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="#F5F5F5">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Example Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/holo_blue_dark"
+            android:padding="12dp">
+            
+            <TextView
+                android:id="@+id/tvExampleNum"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Example 1"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+        
+        <!-- Example Content -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📥 Input:"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:id="@+id/tvInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sample input"
+                android:textSize="14sp"
+                android:fontFamily="monospace"
+                android:background="#2E2E2E"
+                android:padding="12dp"
+                android:textColor="#00FF00"
+                android:lineSpacingExtra="3dp"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📤 Output:"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:id="@+id/tvOutput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sample output"
+                android:textSize="14sp"
+                android:fontFamily="monospace"
+                android:background="#2E2E2E"
+                android:padding="12dp"
+                android:textColor="#FFD700"
+                android:lineSpacingExtra="3dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

@@ -18,6 +18,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
+import androidx.work.Constraints;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.NetworkType;
+import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -31,10 +35,13 @@ import com.icpx.android.R;
 import com.icpx.android.firebase.FirebaseManager;
 import com.icpx.android.firebase.FirebaseSyncService;
 import com.icpx.android.ui.LoginActivity;
+import com.icpx.android.worker.SyncWorker;
+import com.icpx.android.utils.NotificationHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Fragment for app settings
@@ -115,6 +122,9 @@ public class SettingsFragment extends Fragment {
         // Load saved preferences
         boolean requireLogin = prefs.getBoolean("require_login", true);
         requireLoginSwitch.setChecked(requireLogin);
+
+        boolean autoFetchEnabled = prefs.getBoolean("auto_fetch_enabled", false);
+        autoFetchSwitch.setChecked(autoFetchEnabled);
         
         boolean contestRemindersEnabled = prefs.getBoolean("contest_reminders_enabled", false);
         contestRemindersSwitch.setChecked(contestRemindersEnabled);
@@ -184,9 +194,26 @@ public class SettingsFragment extends Fragment {
         });
 
         autoFetchSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            Toast.makeText(requireContext(), 
-                    "Auto-fetch " + (isChecked ? "enabled" : "disabled"), 
-                    Toast.LENGTH_SHORT).show();
+            prefs.edit().putBoolean("auto_fetch_enabled", isChecked).apply();
+            
+            if (isChecked) {
+                Constraints constraints = new Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build();
+
+                PeriodicWorkRequest syncRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, 1, TimeUnit.DAYS)
+                        .setConstraints(constraints)
+                        .setInitialDelay(1, TimeUnit.MINUTES)
+                        .build();
+
+                WorkManager.getInstance(requireContext())
+                        .enqueueUniquePeriodicWork("DailySync", ExistingPeriodicWorkPolicy.UPDATE, syncRequest);
+                
+                Toast.makeText(requireContext(), "Auto-sync enabled (Every 24h)", Toast.LENGTH_SHORT).show();
+            } else {
+                WorkManager.getInstance(requireContext()).cancelUniqueWork("DailySync");
+                Toast.makeText(requireContext(), "Auto-sync disabled", Toast.LENGTH_SHORT).show();
+            }
         });
 
         contestRemindersSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -344,7 +371,9 @@ public class SettingsFragment extends Fragment {
                     setButtonsEnabled(true);
                     saveLastSyncTime();
                     updateLastSyncTime();
-                    Toast.makeText(requireContext(), "✓ " + message, Toast.LENGTH_LONG).show();
+                    String msg = "✓ " + message;
+                    Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
+                    NotificationHelper.sendSyncNotification(requireContext(), "Upload Complete", message);
                 });
             }
             
@@ -354,6 +383,7 @@ public class SettingsFragment extends Fragment {
                     setButtonsEnabled(true);
                     Toast.makeText(requireContext(), "✗ Upload failed: " + e.getMessage(), 
                             Toast.LENGTH_LONG).show();
+                    NotificationHelper.sendSyncNotification(requireContext(), "Upload Failed", e.getMessage());
                 });
             }
         });
@@ -372,7 +402,9 @@ public class SettingsFragment extends Fragment {
                     setButtonsEnabled(true);
                     saveLastSyncTime();
                     updateLastSyncTime();
-                    Toast.makeText(requireContext(), "✓ " + message, Toast.LENGTH_LONG).show();
+                    String msg = "✓ " + message;
+                    Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
+                    NotificationHelper.sendSyncNotification(requireContext(), "Download Complete", message);
                 });
             }
             
@@ -382,6 +414,7 @@ public class SettingsFragment extends Fragment {
                     setButtonsEnabled(true);
                     Toast.makeText(requireContext(), "✗ Download failed: " + e.getMessage(), 
                             Toast.LENGTH_LONG).show();
+                    NotificationHelper.sendSyncNotification(requireContext(), "Download Failed", e.getMessage());
                 });
             }
         });
@@ -401,6 +434,7 @@ public class SettingsFragment extends Fragment {
                     saveLastSyncTime();
                     updateLastSyncTime();
                     Toast.makeText(requireContext(), "✓ Full sync complete!", Toast.LENGTH_LONG).show();
+                    NotificationHelper.sendSyncNotification(requireContext(), "Full Sync Complete", "Data synchronized with cloud.");
                 });
             }
             
@@ -410,6 +444,7 @@ public class SettingsFragment extends Fragment {
                     setButtonsEnabled(true);
                     Toast.makeText(requireContext(), "✗ Sync failed: " + e.getMessage(), 
                             Toast.LENGTH_LONG).show();
+                    NotificationHelper.sendSyncNotification(requireContext(), "Sync Failed", e.getMessage());
                 });
             }
         });

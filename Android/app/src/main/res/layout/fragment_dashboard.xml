@@ -17,14 +17,45 @@
             android:layout_height="wrap_content"
             android:text="Statistics"
             style="@style/TitleMedium"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="8dp"/>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/statsRecyclerView"
+        <!-- Tab indicators -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/statsTabLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"
+            app:tabMode="fixed"
+            app:tabGravity="fill"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- Statistics ViewPager -->
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/statsViewPager"
+            android:layout_width="match_parent"
+            android:layout_height="400dp"
             android:layout_marginBottom="24dp"/>
+
+        <!-- Personal Rating Bar -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Personal Rating (0-10)"
+            style="@style/TitleMedium"
+            android:layout_marginBottom="8dp"/>
+
+        <androidx.cardview.widget.CardView
+            style="@style/CardStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp">
+
+            <com.icpx.android.ui.views.PersonalRatingBarView
+                android:id="@+id/personalRatingBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"/>
+
+        </androidx.cardview.widget.CardView>
 
         <!-- Activity Heatmap -->
         <TextView
@@ -92,145 +123,6 @@
                 android:text="Both"
                 android:textSize="10sp"
                 style="@style/BodySmall"/>
-
-        </LinearLayout>
-
-        <!-- Rating Graph -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Rating Progress"
-            style="@style/TitleMedium"
-            android:layout_marginBottom="8dp"/>
-
-        <androidx.cardview.widget.CardView
-            style="@style/CardStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp">
-
-            <com.icpx.android.ui.views.RatingGraphView
-                android:id="@+id/ratingGraph"
-                android:layout_width="match_parent"
-                android:layout_height="280dp"
-                android:padding="8dp"/>
-
-        </androidx.cardview.widget.CardView>
-
-        <!-- Rating Colors Legend -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="24dp">
-
-            <!-- Row 1 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center"
-                android:layout_marginBottom="8dp">
-
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:background="@color/ratingNewbie"
-                    android:layout_marginEnd="4dp"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Newbie"
-                    android:textSize="11sp"
-                    android:layout_marginEnd="16dp"
-                    style="@style/BodySmall"/>
-
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:background="@color/ratingPupil"
-                    android:layout_marginEnd="4dp"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Pupil"
-                    android:textSize="11sp"
-                    android:layout_marginEnd="16dp"
-                    style="@style/BodySmall"/>
-
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:background="@color/ratingSpecialist"
-                    android:layout_marginEnd="4dp"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Specialist"
-                    android:textSize="11sp"
-                    android:layout_marginEnd="16dp"
-                    style="@style/BodySmall"/>
-
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:background="@color/ratingExpert"
-                    android:layout_marginEnd="4dp"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Expert"
-                    android:textSize="11sp"
-                    style="@style/BodySmall"/>
-
-            </LinearLayout>
-
-            <!-- Row 2 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
-
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:background="@color/ratingCandidateMaster"
-                    android:layout_marginEnd="4dp"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="CM"
-                    android:textSize="11sp"
-                    android:layout_marginEnd="16dp"
-                    style="@style/BodySmall"/>
-
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:background="@color/ratingMaster"
-                    android:layout_marginEnd="4dp"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Master"
-                    android:textSize="11sp"
-                    android:layout_marginEnd="16dp"
-                    style="@style/BodySmall"/>
-
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:background="@color/ratingGrandmaster"
-                    android:layout_marginEnd="4dp"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Grandmaster"
-                    android:textSize="11sp"
-                    style="@style/BodySmall"/>
-
-            </LinearLayout>
 
         </LinearLayout>
 

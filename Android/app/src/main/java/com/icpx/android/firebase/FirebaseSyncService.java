@@ -87,15 +87,29 @@ public class FirebaseSyncService {
                 for (DocumentSnapshot doc : documents) {
                     Target target = documentToTarget(doc);
                     if (target != null) {
-                        // Check if target exists locally
-                        Target existingTarget = targetDAO.getTargetById(target.getId());
-                        if (existingTarget == null) {
-                            targetDAO.createTarget(target, firebaseUser.getEmail());
-                            syncedCount++;
-                        } else {
-                            // Update if Firebase version is newer (you can add timestamp logic)
+                        // First check by problem link to avoid duplicates
+                        Target existingByLink = null;
+                        if (target.getProblemLink() != null && !target.getProblemLink().isEmpty()) {
+                            existingByLink = targetDAO.getTargetByProblemLink(target.getProblemLink(), firebaseUser.getEmail());
+                        }
+                        
+                        if (existingByLink != null) {
+                            // Update existing target by link
+                            target.setId(existingByLink.getId()); // Keep the same local ID
                             targetDAO.updateTarget(target);
                             syncedCount++;
+                        } else {
+                            // Check by ID as fallback
+                            Target existingById = targetDAO.getTargetById(target.getId());
+                            if (existingById == null) {
+                                // Create new target (duplicate check is built into createTarget)
+                                targetDAO.createTarget(target, firebaseUser.getEmail());
+                                syncedCount++;
+                            } else {
+                                // Update existing target by ID
+                                targetDAO.updateTarget(target);
+                                syncedCount++;
+                            }
                         }
                     }
                 }

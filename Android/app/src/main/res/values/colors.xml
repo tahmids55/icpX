@@ -50,6 +50,18 @@
     <color name="ratingMaster">#FF8C00</color>          <!-- Orange -->
     <color name="ratingGrandmaster">#FF0000</color>     <!-- Red -->
     <color name="ratingLegendary">#FF0000</color>       <!-- Red (for 3000+) -->
+    
+    <!-- Personal Rating Bar Colors (0-10 scale) -->
+    <color name="ratingBarNewbie">#CCCCCC</color>       <!-- 0-2: Newbie - Gray -->
+    <color name="ratingBarPupil">#77DD77</color>        <!-- 2-4: Pupil - Light Green -->
+    <color name="ratingBarSpecialist">#03A89E</color>   <!-- 4-6: Specialist - Cyan -->
+    <color name="ratingBarExpert">#4169E1</color>       <!-- 6-7: Expert - Royal Blue -->
+    <color name="ratingBarCandidateMaster">#A020F0</color> <!-- 7-8: Candidate Master - Purple -->
+    <color name="ratingBarMaster">#FF8C00</color>       <!-- 8-8.5: Master - Dark Orange -->
+    <color name="ratingBarGrandMaster">#FF0000</color>  <!-- 8.5-9: Grand Master - Red -->
+    <color name="ratingBarKing">#FFD700</color>         <!-- 9-9.5: King - Gold -->
+    <color name="ratingBarEternity">#FF00FF</color>     <!-- 9.5-10: Eternity - Magenta/Pink gradient -->
+    <color name="ratingBarEternityGradient">#00FFFF</color> <!-- Cyan for gradient effect -->
 
     <!-- Heatmap Colors -->
     <color name="heatmapEmpty">#EBEDF0</color>          <!-- Light gray for no activity -->

@@ -1,9 +1,13 @@
 package com.icpx.android.adapters;
 
 import android.graphics.Color;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -15,8 +19,10 @@ import com.icpx.android.R;
 import com.icpx.android.model.Target;
 
 import java.text.SimpleDateFormat;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Adapter for displaying targets
@@ -26,7 +32,13 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
     private List<Target> targets;
     private OnTargetClickListener listener;
     private OnPendingClickListener pendingClickListener;
+    private OnSelectionModeListener selectionModeListener;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+    
+    private boolean isSelectionMode = false;
+    private Set<Integer> selectedItems = new HashSet<>();
+    
+    private static final long LONG_PRESS_DURATION = 750; // 750ms for long press
 
     public interface OnTargetClickListener {
         void onTargetClick(Target target);
@@ -35,10 +47,18 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
     public interface OnPendingClickListener {
         void onPendingClick(Target target);
     }
+    
+    public interface OnSelectionModeListener {
+        void onSelectionModeChanged(boolean isSelectionMode, int selectedCount);
+    }
 
     public TargetAdapter(List<Target> targets, OnTargetClickListener listener) {
         this.targets = targets;
         this.listener = listener;
+    }
+    
+    public void setOnSelectionModeListener(OnSelectionModeListener listener) {
+        this.selectionModeListener = listener;
     }
 
     public void setOnPendingClickListener(OnPendingClickListener pendingClickListener) {
@@ -97,11 +117,64 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
                 android.content.res.ColorStateList.valueOf(statusColor));
         holder.statusIndicator.setBackgroundColor(statusColor);
         
-        holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onTargetClick(target);
-            }
-        });
+        // Selection Mode Logic
+        if (isSelectionMode && "achieved".equals(target.getStatus())) {
+            holder.selectionCheckBox.setVisibility(View.VISIBLE);
+            holder.selectionCheckBox.setChecked(selectedItems.contains(target.getId()));
+            holder.selectionCheckBox.setOnClickListener(v -> toggleSelection(target.getId()));
+        } else {
+            holder.selectionCheckBox.setVisibility(View.GONE);
+        }
+        
+        // Touch Listener Logic
+        if ("achieved".equals(target.getStatus())) {
+            // New Logic for Achieved: Normal click opens problem, Long Press -> Selection Mode
+            holder.itemView.setOnTouchListener(null); // Clear previous touch listener
+            
+            holder.itemView.setOnClickListener(v -> {
+                if (isSelectionMode) {
+                    toggleSelection(target.getId());
+                } else {
+                    // Open problem in offline/browser mode
+                    if (target.getProblemLink() != null && !target.getProblemLink().isEmpty()) {
+                        try {
+                            android.content.Intent intent = new android.content.Intent(
+                                v.getContext(), 
+                                com.icpx.android.ui.ProblemTabbedActivity.class
+                            );
+                            intent.putExtra(
+                                com.icpx.android.ui.ProblemTabbedActivity.EXTRA_PROBLEM_URL, 
+                                target.getProblemLink()
+                            );
+                            intent.putExtra(
+                                com.icpx.android.ui.ProblemTabbedActivity.EXTRA_PROBLEM_NAME, 
+                                target.getName()
+                            );
+                            v.getContext().startActivity(intent);
+                        } catch (Exception e) {
+                            android.widget.Toast.makeText(v.getContext(), 
+                                "Error opening problem: " + e.getMessage(), 
+                                android.widget.Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+            });
+            
+            holder.itemView.setOnLongClickListener(v -> {
+                if (!isSelectionMode) {
+                    startSelectionMode();
+                    toggleSelection(target.getId()); // Select the long-pressed item
+                    return true;
+                }
+                return false;
+            });
+            
+            // Allow checkbox clicking even if row click is handled
+            holder.selectionCheckBox.setClickable(false); // Let row click handle it
+        } else {
+            // Default Logic for Pending/Wait: Maintain old behavior (Open/Delete Dialog)
+            setupDefaultTouchListener(holder, target);
+        }
 
         holder.pendingButton.setOnClickListener(v -> {
             if (pendingClickListener != null) {
@@ -109,10 +182,159 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
             }
         });
     }
+    
+    private void setupDefaultTouchListener(ViewHolder holder, Target target) {
+        // Simple touch handling with long press (750ms)
+        final Handler longPressHandler = new Handler(Looper.getMainLooper());
+        final boolean[] isLongPressTriggered = {false};
+        
+        final Runnable longPressRunnable = new Runnable() {
+            @Override
+            public void run() {
+                isLongPressTriggered[0] = true;
+                
+                // Vibrate for feedback
+                try {
+                    android.os.Vibrator vibrator = (android.os.Vibrator) holder.itemView.getContext()
+                        .getSystemService(android.content.Context.VIBRATOR_SERVICE);
+                    if (vibrator != null && vibrator.hasVibrator()) {
+                        vibrator.vibrate(50);
+                    }
+                } catch (Exception e) {
+                    // Ignore vibration errors
+                }
+                
+                // Trigger the action
+                if (listener != null) {
+                    listener.onTargetClick(target);
+                }
+            }
+        };
+        
+        holder.itemView.setOnTouchListener(new View.OnTouchListener() {
+            private float startX, startY;
+            
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        isLongPressTriggered[0] = false;
+                        startX = event.getX();
+                        startY = event.getY();
+                        
+                        // Simple alpha feedback
+                        v.setAlpha(0.7f);
+                        
+                        // Start long press timer
+                        longPressHandler.postDelayed(longPressRunnable, LONG_PRESS_DURATION);
+                        return true;
+                        
+                    case MotionEvent.ACTION_MOVE:
+                        // Cancel if finger moved too far
+                        float deltaX = Math.abs(event.getX() - startX);
+                        float deltaY = Math.abs(event.getY() - startY);
+                        if (deltaX > 50 || deltaY > 50) {
+                            longPressHandler.removeCallbacks(longPressRunnable);
+                            v.setAlpha(1.0f);
+                        }
+                        return true;
+                        
+                    case MotionEvent.ACTION_UP:
+                        longPressHandler.removeCallbacks(longPressRunnable);
+                        v.setAlpha(1.0f);
+                        
+                        // Only open problem viewer if it was a normal tap
+                        if (!isLongPressTriggered[0]) {
+                            if (target.getProblemLink() != null && !target.getProblemLink().isEmpty()) {
+                                try {
+                                    android.util.Log.d("TargetAdapter", "Opening problem: " + target.getName() + " URL: " + target.getProblemLink());
+                                    android.content.Intent intent = new android.content.Intent(
+                                        v.getContext(), 
+                                        com.icpx.android.ui.ProblemTabbedActivity.class
+                                    );
+                                    intent.putExtra(
+                                        com.icpx.android.ui.ProblemTabbedActivity.EXTRA_PROBLEM_URL, 
+                                        target.getProblemLink()
+                                    );
+                                    intent.putExtra(
+                                        com.icpx.android.ui.ProblemTabbedActivity.EXTRA_PROBLEM_NAME, 
+                                        target.getName()
+                                    );
+                                    v.getContext().startActivity(intent);
+                                    android.util.Log.d("TargetAdapter", "Activity started successfully");
+                                } catch (Exception e) {
+                                    android.util.Log.e("TargetAdapter", "Error opening problem", e);
+                                    android.widget.Toast.makeText(v.getContext(), 
+                                        "Error opening problem: " + e.getMessage(), 
+                                        android.widget.Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        }
+                        return true;
+                        
+                    case MotionEvent.ACTION_CANCEL:
+                        longPressHandler.removeCallbacks(longPressRunnable);
+                        v.setAlpha(1.0f);
+                        return true;
+                }
+                return false;
+            }
+        });
+    }
 
     @Override
     public int getItemCount() {
         return targets.size();
+    }
+    
+    public void startSelectionMode() {
+        isSelectionMode = true;
+        notifyDataSetChanged();
+        if (selectionModeListener != null) {
+            selectionModeListener.onSelectionModeChanged(true, selectedItems.size());
+        }
+    }
+    
+    public void stopSelectionMode() {
+        isSelectionMode = false;
+        selectedItems.clear();
+        notifyDataSetChanged();
+        if (selectionModeListener != null) {
+            selectionModeListener.onSelectionModeChanged(false, 0);
+        }
+    }
+    
+    public void toggleSelection(int targetId) {
+        if (selectedItems.contains(targetId)) {
+            selectedItems.remove(targetId);
+        } else {
+            selectedItems.add(targetId);
+        }
+        notifyDataSetChanged();
+        if (selectionModeListener != null) {
+            selectionModeListener.onSelectionModeChanged(isSelectionMode, selectedItems.size());
+        }
+    }
+    
+    public void selectAllAchieved() {
+        selectedItems.clear();
+        for (Target t : targets) {
+            if ("achieved".equals(t.getStatus())) {
+                selectedItems.add(t.getId());
+            }
+        }
+        notifyDataSetChanged();
+        if (selectionModeListener != null) {
+            selectionModeListener.onSelectionModeChanged(isSelectionMode, selectedItems.size());
+        }
+    }
+    
+    public Set<Integer> getSelectedItems() {
+        return new HashSet<>(selectedItems);
+    }
+    
+    public void deleteSelectedItemsAndExitMode() {
+        stopSelectionMode();
     }
 
     public void updateData(List<Target> newTargets) {
@@ -128,6 +350,7 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
         TextView dateTextView;
         Chip statusChip;
         MaterialButton pendingButton;
+        CheckBox selectionCheckBox;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -138,6 +361,7 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
             dateTextView = itemView.findViewById(R.id.dateTextView);
             statusChip = itemView.findViewById(R.id.statusChip);
             pendingButton = itemView.findViewById(R.id.pendingButton);
+            selectionCheckBox = itemView.findViewById(R.id.selectionCheckBox);
         }
     }
 }

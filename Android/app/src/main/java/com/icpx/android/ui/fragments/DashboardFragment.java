@@ -9,28 +9,23 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.icpx.android.R;
-import com.icpx.android.adapters.StatCardAdapter;
+import com.icpx.android.adapters.StatsPagerAdapter;
 import com.icpx.android.adapters.TargetAdapter;
 import com.icpx.android.database.TargetDAO;
-import com.icpx.android.database.UserDAO;
-import com.icpx.android.firebase.FirebaseManager;
-import com.icpx.android.model.StatCard;
 import com.icpx.android.model.Target;
-import com.icpx.android.model.User;
-import com.icpx.android.service.CodeforcesService;
 import com.icpx.android.ui.views.ActivityHeatmapView;
-import com.icpx.android.ui.views.RatingGraphView;
-
-import org.json.JSONObject;
+import com.icpx.android.ui.views.PersonalRatingBarView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,14 +36,15 @@ import java.util.Map;
  */
 public class DashboardFragment extends Fragment {
 
-    private RecyclerView statsRecyclerView;
+    private ViewPager2 statsViewPager;
+    private TabLayout statsTabLayout;
     private RecyclerView recentTargetsRecyclerView;
     private TextView emptyStateText;
     private MaterialButton viewAllButton;
     private ActivityHeatmapView activityHeatmap;
-    private RatingGraphView ratingGraph;
+    private PersonalRatingBarView personalRatingBar;
     
-    private StatCardAdapter statCardAdapter;
+    private StatsPagerAdapter statsPagerAdapter;
     private TargetAdapter targetAdapter;
     private TargetDAO targetDAO;
 
@@ -61,7 +57,7 @@ public class DashboardFragment extends Fragment {
         initViews(view);
         targetDAO = new TargetDAO(requireContext());
         
-        setupStatsRecyclerView();
+        setupStatsViewPager();
         setupRecentTargetsRecyclerView();
         loadData();
         
@@ -69,21 +65,35 @@ public class DashboardFragment extends Fragment {
     }
 
     private void initViews(View view) {
-        statsRecyclerView = view.findViewById(R.id.statsRecyclerView);
+        statsViewPager = view.findViewById(R.id.statsViewPager);
+        statsTabLayout = view.findViewById(R.id.statsTabLayout);
         recentTargetsRecyclerView = view.findViewById(R.id.recentTargetsRecyclerView);
         emptyStateText = view.findViewById(R.id.emptyStateText);
         viewAllButton = view.findViewById(R.id.viewAllButton);
         activityHeatmap = view.findViewById(R.id.activityHeatmap);
-        ratingGraph = view.findViewById(R.id.ratingGraph);
+        personalRatingBar = view.findViewById(R.id.personalRatingBar);
         
         // Set click listener for View All button
         viewAllButton.setOnClickListener(v -> navigateToTargets());
     }
 
-    private void setupStatsRecyclerView() {
-        statsRecyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 2));
-        statCardAdapter = new StatCardAdapter(new ArrayList<>());
-        statsRecyclerView.setAdapter(statCardAdapter);
+    private void setupStatsViewPager() {
+        statsPagerAdapter = new StatsPagerAdapter(this);
+        statsViewPager.setAdapter(statsPagerAdapter);
+        
+        // Connect TabLayout with ViewPager2
+        new TabLayoutMediator(statsTabLayout, statsViewPager,
+                (tab, position) -> {
+                    switch (position) {
+                        case 0:
+                            tab.setText("All Time");
+                            break;
+                        case 1:
+                            tab.setText("Daily");
+                            break;
+                    }
+                }
+        ).attach();
     }
 
     private void setupRecentTargetsRecyclerView() {
@@ -104,81 +114,6 @@ public class DashboardFragment extends Fragment {
             int totalProblems = targetDAO.getAllTargets(userEmail).size();
             int solvedProblems = targetDAO.getCountByStatus("achieved", userEmail);
             int pendingProblems = targetDAO.getCountByStatus("pending", userEmail);
-            
-            // Get Codeforces handle from user-specific SharedPreferences
-            String prefKey = "user_prefs_" + userEmail;
-            android.content.SharedPreferences userPrefs = requireActivity().getSharedPreferences(prefKey, 0);
-            String cfHandle = userPrefs.getString("codeforces_handle", null);
-            
-            // If not in local prefs, try loading from Firebase
-            if (cfHandle == null || cfHandle.isEmpty()) {
-                try {
-                    java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-                    final String[] firebaseHandle = new String[1];
-                    
-                    FirebaseManager.getInstance().getUserData(firebaseUser.getUid(),
-                            new FirebaseManager.DataCallback() {
-                                @Override
-                                public void onSuccess(java.util.List<com.google.firebase.firestore.DocumentSnapshot> documents) {
-                                    if (!documents.isEmpty()) {
-                                        com.google.firebase.firestore.DocumentSnapshot doc = documents.get(0);
-                                        firebaseHandle[0] = doc.getString("codeforcesHandle");
-                                        // Save to local prefs for faster access next time
-                                        if (firebaseHandle[0] != null && !firebaseHandle[0].isEmpty()) {
-                                            userPrefs.edit()
-                                                    .putString("codeforces_handle", firebaseHandle[0])
-                                                    .apply();
-                                        }
-                                    }
-                                    latch.countDown();
-                                }
-                                
-                                @Override
-                                public void onFailure(Exception e) {
-                                    android.util.Log.e("DashboardFragment", "Failed to load handle from Firebase", e);
-                                    latch.countDown();
-                                }
-                            });
-                    
-                    latch.await(3, java.util.concurrent.TimeUnit.SECONDS);
-                    if (firebaseHandle[0] != null) {
-                        cfHandle = firebaseHandle[0];
-                    }
-                } catch (Exception e) {
-                    android.util.Log.e("DashboardFragment", "Error loading handle from Firebase", e);
-                }
-            }
-            
-            final String finalHandle = cfHandle;
-            
-            String ratingText = "N/A";
-            int ratingColor = R.color.statPurple;
-            
-            if (finalHandle != null && !finalHandle.isEmpty()) {
-                try {
-                    CodeforcesService cfService = new CodeforcesService();
-                    JSONObject userInfo = cfService.fetchUserInfo(finalHandle);
-                    if (userInfo != null && userInfo.has("rating")) {
-                        int rating = userInfo.getInt("rating");
-                        ratingText = String.valueOf(rating);
-                        ratingColor = getRatingColor(rating);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    // Keep default values on error
-                }
-            }
-
-            // Create stat cards
-            List<StatCard> statCards = new ArrayList<>();
-            statCards.add(new StatCard("Total Problems", String.valueOf(totalProblems), 
-                    "📊", R.color.statBlue));
-            statCards.add(new StatCard("Solved", String.valueOf(solvedProblems), 
-                    "✅", R.color.statGreen));
-            statCards.add(new StatCard("Pending", String.valueOf(pendingProblems), 
-                    "⏳", R.color.statOrange));
-            statCards.add(new StatCard("CF Rating", ratingText, 
-                    "", ratingColor));
 
             // Get recent targets (limit to 5)
             List<Target> allTargets = targetDAO.getAllTargets(userEmail);
@@ -188,28 +123,13 @@ public class DashboardFragment extends Fragment {
             Map<String, Integer> problemActivity = targetDAO.getProblemActivityByDate(userEmail);
             Map<String, Integer> topicActivity = targetDAO.getTopicActivityByDate(userEmail);
 
-            // Sample rating history for demonstration (replace with actual mechanism later)
-            List<RatingGraphView.RatingPoint> ratingHistory = new ArrayList<>();
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 365*24*60*60*1000L, 800, "Contest 1"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 330*24*60*60*1000L, 950, "Contest 2"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 300*24*60*60*1000L, 1050, "Contest 3"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 270*24*60*60*1000L, 1150, "Contest 4"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 240*24*60*60*1000L, 1100, "Contest 5"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 210*24*60*60*1000L, 1250, "Contest 6"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 180*24*60*60*1000L, 1200, "Contest 7"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 150*24*60*60*1000L, 1320, "Contest 8"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 120*24*60*60*1000L, 1420, "Contest 9"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 90*24*60*60*1000L, 1380, "Contest 10"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 60*24*60*60*1000L, 1520, "Contest 11"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 30*24*60*60*1000L, 1480, "Contest 12"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis() - 15*24*60*60*1000L, 1610, "Contest 13"));
-            ratingHistory.add(new RatingGraphView.RatingPoint(System.currentTimeMillis(), 1580, "Contest 14"));
+            // Calculate personal rating based on target achievement
+            float personalRating = calculatePersonalRating(totalProblems, solvedProblems, pendingProblems);
 
             requireActivity().runOnUiThread(() -> {
-                statCardAdapter.updateData(statCards);
                 targetAdapter.updateData(recentTargets);
                 activityHeatmap.setActivityData(problemActivity, topicActivity);
-                ratingGraph.setRatingHistory(ratingHistory);
+                personalRatingBar.setRating(personalRating);
                 
                 if (recentTargets.isEmpty()) {
                     emptyStateText.setVisibility(View.VISIBLE);
@@ -223,28 +143,63 @@ public class DashboardFragment extends Fragment {
     }
     
     /**
-     * Get Codeforces rating color based on rating value
+     * Calculate personal rating (0-10) based on target achievement
+     * Increases when targets are achieved, decreases when targets are not met
      */
-    private int getRatingColor(int rating) {
-        if (rating < 1200) {
-            return R.color.ratingNewbie;        // Gray
-        } else if (rating < 1400) {
-            return R.color.ratingPupil;         // Green
-        } else if (rating < 1600) {
-            return R.color.ratingSpecialist;    // Cyan
-        } else if (rating < 1900) {
-            return R.color.ratingExpert;        // Blue
-        } else if (rating < 2100) {
-            return R.color.ratingCandidateMaster; // Violet
-        } else if (rating < 2400) {
-            return R.color.ratingMaster;        // Orange
-        } else {
-            return R.color.ratingGrandmaster;   // Red
+    private float calculatePersonalRating(int totalProblems, int solvedProblems, int pendingProblems) {
+        // Load previous rating from SharedPreferences
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser == null || firebaseUser.getEmail() == null) {
+            return 5.0f; // Default starting rating
         }
+        
+        String prefKey = "user_prefs_" + firebaseUser.getEmail();
+        android.content.SharedPreferences userPrefs = requireActivity().getSharedPreferences(prefKey, 0);
+        float previousRating = userPrefs.getFloat("personal_rating", 5.0f);
+        int previousSolved = userPrefs.getInt("previous_solved", 0);
+        int previousPending = userPrefs.getInt("previous_pending", 0);
+        
+        // Calculate change
+        float rating = previousRating;
+        
+        // Increase for newly solved problems
+        int newlySolved = solvedProblems - previousSolved;
+        if (newlySolved > 0) {
+            rating += newlySolved * 0.15f; // +0.15 per solved problem
+        }
+        
+        // Decrease for increase in pending problems (targets not being met)
+        int pendingIncrease = pendingProblems - previousPending;
+        if (pendingIncrease > 0) {
+            rating -= pendingIncrease * 0.05f; // -0.05 per new pending
+        }
+        
+        // Clamp between 0 and 10
+        rating = Math.max(0f, Math.min(10f, rating));
+        
+        // Save current state for next calculation
+        userPrefs.edit()
+            .putFloat("personal_rating", rating)
+            .putInt("previous_solved", solvedProblems)
+            .putInt("previous_pending", pendingProblems)
+            .apply();
+        
+        return rating;
     }
 
     private void onTargetClick(Target target) {
-        // Handle target click - can open detail dialog or navigate
+        // Open ProblemTabbedActivity with the problem URL and name
+        if (target.getProblemLink() != null && !target.getProblemLink().isEmpty()) {
+            android.content.Intent intent = new android.content.Intent(requireActivity(), 
+                    com.icpx.android.ui.ProblemTabbedActivity.class);
+            intent.putExtra("EXTRA_PROBLEM_URL", target.getProblemLink());
+            intent.putExtra("EXTRA_PROBLEM_NAME", target.getName());
+            startActivity(intent);
+        } else {
+            android.widget.Toast.makeText(requireContext(), 
+                    "No problem link available", 
+                    android.widget.Toast.LENGTH_SHORT).show();
+        }
     }
     
     /**

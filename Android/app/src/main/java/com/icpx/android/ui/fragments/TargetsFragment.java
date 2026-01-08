@@ -41,11 +41,19 @@ public class TargetsFragment extends Fragment {
     private RecyclerView targetsRecyclerView;
     private FloatingActionButton fab;
     
+    // Selection Toolbar
+    private android.widget.LinearLayout selectionToolbar;
+    private android.widget.CheckBox selectAllCheckBox;
+    private android.widget.TextView selectionCountText;
+    private android.widget.ImageButton closeSelectionButton;
+    private android.widget.ImageButton deleteSelectedButton;
+    
     private TargetAdapter targetAdapter;
     private TargetDAO targetDAO;
     private String currentFilter = "all";
     private CodeforcesService codeforcesService;
     private android.app.ProgressDialog progressDialog;
+    private boolean duplicatesRemoved = false; // Track if duplicates have been removed
 
     @Nullable
     @Override
@@ -70,12 +78,23 @@ public class TargetsFragment extends Fragment {
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         targetsRecyclerView = view.findViewById(R.id.targetsRecyclerView);
         fab = view.findViewById(R.id.fab);
+        
+        selectionToolbar = view.findViewById(R.id.selectionToolbar);
+        selectAllCheckBox = view.findViewById(R.id.selectAllCheckBox);
+        selectionCountText = view.findViewById(R.id.selectionCountText);
+        closeSelectionButton = view.findViewById(R.id.closeSelectionButton);
+        deleteSelectedButton = view.findViewById(R.id.deleteSelectedButton);
     }
 
     private void setupTabLayout() {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                // Exit selection mode when switching tabs
+                if (targetAdapter != null) {
+                    targetAdapter.stopSelectionMode();
+                }
+                
                 int position = tab.getPosition();
                 switch (position) {
                     case 0:
@@ -99,11 +118,89 @@ public class TargetsFragment extends Fragment {
         });
     }
 
+    private void setupSelectionListeners() {
+        // Selection Mode Listener
+        targetAdapter.setOnSelectionModeListener((isSelectionMode, selectedCount) -> {
+            if (isSelectionMode) {
+                selectionToolbar.setVisibility(View.VISIBLE);
+                fab.hide();
+                selectionCountText.setText(selectedCount + " selected");
+            } else {
+                selectionToolbar.setVisibility(View.GONE);
+                fab.show();
+                selectAllCheckBox.setChecked(false);
+            }
+        });
+        
+        // Toolbar Listeners
+        selectAllCheckBox.setOnClickListener(v -> {
+            if (selectAllCheckBox.isChecked()) {
+                targetAdapter.selectAllAchieved();
+            } else {
+                if (targetAdapter != null) {
+                   targetAdapter.stopSelectionMode(); 
+                   targetAdapter.startSelectionMode(); 
+                }
+            }
+        });
+        
+        closeSelectionButton.setOnClickListener(v -> targetAdapter.stopSelectionMode());
+        
+        deleteSelectedButton.setOnClickListener(v -> {
+            java.util.Set<Integer> selectedIds = targetAdapter.getSelectedItems();
+            if (selectedIds.isEmpty()) return;
+            
+            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Delete Selected")
+                .setMessage("Delete " + selectedIds.size() + " items?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                    new Thread(() -> {
+                        for (int id : selectedIds) {
+                             Target t = targetDAO.getTargetById(id);
+                             if (t != null) {
+                                // Soft or Hard delete
+                                if ("achieved".equals(t.getStatus())) {
+                                    t.setDeleted(true);
+                                    targetDAO.updateTarget(t);
+                                } else {
+                                    targetDAO.deleteTarget(t.getId());
+                                }
+                                
+                                // Sync deletion
+                                if (currentUser != null) {
+                                    FirebaseManager.getInstance().deleteTarget(currentUser.getUid(), 
+                                            String.valueOf(t.getId()), 
+                                            new FirebaseManager.FirestoreCallback() {
+                                                @Override
+                                                public void onSuccess() {}
+                                                
+                                                @Override
+                                                public void onFailure(Exception e) {}
+                                            });
+                                }
+                             }
+                        }
+                        
+                        requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(requireContext(), "Selected items deleted", Toast.LENGTH_SHORT).show();
+                            targetAdapter.stopSelectionMode();
+                            loadTargets();
+                        });
+                    }).start();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+        });
+    }
+
     private void setupRecyclerView() {
         targetsRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         targetAdapter = new TargetAdapter(new ArrayList<>(), this::onTargetClick);
         targetAdapter.setOnPendingClickListener(this::onPendingClick);
         targetsRecyclerView.setAdapter(targetAdapter);
+        
+        setupSelectionListeners();
         
         swipeRefreshLayout.setOnRefreshListener(this::loadTargets);
     }
@@ -129,6 +226,15 @@ public class TargetsFragment extends Fragment {
         android.util.Log.d("TargetsFragment", "Loading targets for user: " + userEmail);
         
         new Thread(() -> {
+            // Always remove duplicates on every load
+            int removed = targetDAO.removeDuplicateTargets(userEmail);
+            if (removed > 0) {
+                android.util.Log.i("TargetsFragment", "Removed " + removed + " duplicate targets");
+                requireActivity().runOnUiThread(() -> 
+                    Toast.makeText(requireContext(), "Cleaned up " + removed + " duplicate entries", Toast.LENGTH_LONG).show()
+                );
+            }
+            
             List<Target> targets;
             
             if ("all".equals(currentFilter)) {
@@ -328,18 +434,24 @@ public class TargetsFragment extends Fragment {
             android.util.Log.d("TargetsFragment", "Creating target for user: " + userEmail);
             new Thread(() -> {
                 long id = targetDAO.createTarget(target, userEmail);
-                android.util.Log.d("TargetsFragment", "Created target with ID: " + id + " for user: " + userEmail);
                 
-                // Auto-sync to Firebase
-                if (id > 0) {
-                    syncTargetToFirebase(target, currentUser.getUid());
-                }
+                final boolean isDuplicate = (id > 0 && targetDAO.getTargetById((int)id) != null);
                 
                 requireActivity().runOnUiThread(() -> {
                     if (id > 0) {
-                        Toast.makeText(requireContext(), R.string.target_added, 
-                                Toast.LENGTH_SHORT).show();
+                        if (isDuplicate) {
+                            Toast.makeText(requireContext(), "This problem already exists in your targets", 
+                                    Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(requireContext(), R.string.target_added, 
+                                    Toast.LENGTH_SHORT).show();
+                        }
                         loadTargets();
+                        
+                        // Auto-sync to Firebase only if not duplicate
+                        if (!isDuplicate) {
+                            syncTargetToFirebase(target, currentUser.getUid());
+                        }
                     } else {
                         Toast.makeText(requireContext(), "Failed to add target", 
                                 Toast.LENGTH_SHORT).show();

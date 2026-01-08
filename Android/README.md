@@ -11,6 +11,11 @@ An Android application for tracking competitive programming progress and managin
 - **Auto-Fetch**: Automatically fetch problem details from Codeforces API
 - **History Tracking**: View all solved problems with ratings
 - **Statistics**: Track total problems, solved count, pending tasks, and average rating
+- **Offline WebView**: View problem statements offline after first load
+  - Automatically caches pages when loaded with internet
+  - Smart network detection and cache management
+  - System-managed cache storage for offline access
+  - Menu options to view cache info and clear cache
 
 ### Technical Features
 - Material Design UI with custom themes

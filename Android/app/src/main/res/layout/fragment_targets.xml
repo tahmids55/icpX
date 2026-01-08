@@ -38,6 +38,52 @@
 
         </com.google.android.material.tabs.TabLayout>
 
+        <!-- Selection Toolbar -->
+        <LinearLayout
+            android:id="@+id/selectionToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:background="#F5F5F5"
+            android:visibility="gone"
+            android:gravity="center_vertical">
+
+            <CheckBox
+                android:id="@+id/selectAllCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select All"/>
+
+            <TextView
+                android:id="@+id/selectionCountText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="0 selected"
+                android:textColor="@color/textSecondary"/>
+
+            <ImageButton
+                android:id="@+id/deleteSelectedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@android:drawable/ic_menu_delete"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Delete"
+                android:padding="8dp"
+                android:layout_marginEnd="8dp"/>
+
+            <ImageButton
+                android:id="@+id/closeSelectionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Close"/>
+
+        </LinearLayout>
+
         <!-- ViewPager or RecyclerView -->
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/swipeRefreshLayout"

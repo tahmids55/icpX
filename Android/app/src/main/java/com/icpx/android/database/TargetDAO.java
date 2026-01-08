@@ -27,9 +27,18 @@ public class TargetDAO {
     }
 
     /**
-     * Create a new target
+     * Create a new target (checks for duplicates first)
      */
     public long createTarget(Target target, String userEmail) {
+        // Check for duplicate problem link
+        if (target.getProblemLink() != null && !target.getProblemLink().isEmpty()) {
+            Target existing = getTargetByProblemLink(target.getProblemLink(), userEmail);
+            if (existing != null) {
+                android.util.Log.w("TargetDAO", "Duplicate problem detected: " + target.getProblemLink() + ". Skipping creation.");
+                return existing.getId(); // Return existing ID instead of creating duplicate
+            }
+        }
+        
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.COLUMN_USER_EMAIL, userEmail);
@@ -141,6 +150,33 @@ public class TargetDAO {
     }
 
     /**
+     * Check if a target with the same problem link already exists for this user
+     */
+    public Target getTargetByProblemLink(String problemLink, String userEmail) {
+        if (problemLink == null || problemLink.isEmpty()) {
+            return null;
+        }
+        
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(
+                DatabaseHelper.TABLE_TARGETS,
+                null,
+                DatabaseHelper.COLUMN_PROBLEM_LINK + " = ? AND " + DatabaseHelper.COLUMN_USER_EMAIL + " = ? AND " + DatabaseHelper.COLUMN_DELETED + " = 0",
+                new String[]{problemLink, userEmail},
+                null,
+                null,
+                null
+        );
+
+        Target target = null;
+        if (cursor.moveToFirst()) {
+            target = cursorToTarget(cursor);
+        }
+        cursor.close();
+        return target;
+    }
+
+    /**
      * Get achieved targets for history (includes deleted items)
      */
     public List<Target> getAchievedTargetsForHistory() {
@@ -212,6 +248,52 @@ public class TargetDAO {
                 DatabaseHelper.COLUMN_ID + " = ?",
                 new String[]{String.valueOf(targetId)}
         );
+    }
+
+    /**
+     * Remove duplicate targets for a user, keeping the oldest entry for each problem link
+     */
+    public int removeDuplicateTargets(String userEmail) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        int deletedCount = 0;
+        
+        // Get all targets for this user
+        List<Target> targets = getAllTargets(userEmail);
+        
+        // Group targets by problem link
+        java.util.Map<String, java.util.List<Target>> targetsByLink = new java.util.HashMap<>();
+        for (Target target : targets) {
+            String link = target.getProblemLink();
+            if (link != null && !link.isEmpty()) {
+                if (!targetsByLink.containsKey(link)) {
+                    targetsByLink.put(link, new java.util.ArrayList<>());
+                }
+                targetsByLink.get(link).add(target);
+            }
+        }
+        
+        // For each problem link with duplicates, keep the oldest and delete the rest
+        for (java.util.Map.Entry<String, java.util.List<Target>> entry : targetsByLink.entrySet()) {
+            java.util.List<Target> duplicates = entry.getValue();
+            if (duplicates.size() > 1) {
+                // Sort by creation date (oldest first)
+                java.util.Collections.sort(duplicates, new java.util.Comparator<Target>() {
+                    @Override
+                    public int compare(Target t1, Target t2) {
+                        return t1.getCreatedAt().compareTo(t2.getCreatedAt());
+                    }
+                });
+                
+                // Delete all except the first (oldest) one
+                for (int i = 1; i < duplicates.size(); i++) {
+                    deleteTarget(duplicates.get(i).getId());
+                    deletedCount++;
+                    android.util.Log.i("TargetDAO", "Deleted duplicate: " + duplicates.get(i).getName() + " (ID: " + duplicates.get(i).getId() + ")");
+                }
+            }
+        }
+        
+        return deletedCount;
     }
 
     /**
@@ -328,5 +410,93 @@ public class TargetDAO {
 
         cursor.close();
         return activityMap;
+    }
+
+    /**
+     * Get count of unique solved problems (excluding duplicates)
+     */
+    public int getUniqueSolvedCount(String userEmail) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String query = "SELECT COUNT(DISTINCT " + DatabaseHelper.COLUMN_PROBLEM_LINK + ") FROM " + 
+                DatabaseHelper.TABLE_TARGETS +
+                " WHERE " + DatabaseHelper.COLUMN_USER_EMAIL + " = ? AND " +
+                DatabaseHelper.COLUMN_STATUS + " = 'achieved' AND " +
+                DatabaseHelper.COLUMN_TYPE + " = 'problem' AND " +
+                DatabaseHelper.COLUMN_PROBLEM_LINK + " IS NOT NULL AND " +
+                DatabaseHelper.COLUMN_PROBLEM_LINK + " != ''";
+        
+        Cursor cursor = db.rawQuery(query, new String[]{userEmail});
+        int count = 0;
+        if (cursor.moveToFirst()) {
+            count = cursor.getInt(0);
+        }
+        cursor.close();
+        return count;
+    }
+
+    /**
+     * Get max CF rating from solved problems
+     */
+    public int getMaxCfRating(String userEmail) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String query = "SELECT MAX(" + DatabaseHelper.COLUMN_RATING + ") FROM " + 
+                DatabaseHelper.TABLE_TARGETS +
+                " WHERE " + DatabaseHelper.COLUMN_USER_EMAIL + " = ? AND " +
+                DatabaseHelper.COLUMN_STATUS + " = 'achieved' AND " +
+                DatabaseHelper.COLUMN_TYPE + " = 'problem' AND " +
+                DatabaseHelper.COLUMN_RATING + " IS NOT NULL";
+        
+        Cursor cursor = db.rawQuery(query, new String[]{userEmail});
+        int maxRating = 0;
+        if (cursor.moveToFirst()) {
+            maxRating = cursor.getInt(0);
+        }
+        cursor.close();
+        return maxRating;
+    }
+
+    /**
+     * Get count of problems added today
+     */
+    public int getDailyAddedCount(String userEmail) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String today = dateFormat.format(new Date());
+        
+        String query = "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_TARGETS +
+                " WHERE " + DatabaseHelper.COLUMN_USER_EMAIL + " = ? AND " +
+                DatabaseHelper.COLUMN_TYPE + " = 'problem' AND " +
+                "date(" + DatabaseHelper.COLUMN_CREATED_AT + "/1000, 'unixepoch', 'localtime') = ?";
+        
+        Cursor cursor = db.rawQuery(query, new String[]{userEmail, today});
+        int count = 0;
+        if (cursor.moveToFirst()) {
+            count = cursor.getInt(0);
+        }
+        cursor.close();
+        return count;
+    }
+
+    /**
+     * Get count of problems solved today
+     */
+    public int getDailySolvedCount(String userEmail) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String today = dateFormat.format(new Date());
+        
+        String query = "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_TARGETS +
+                " WHERE " + DatabaseHelper.COLUMN_USER_EMAIL + " = ? AND " +
+                DatabaseHelper.COLUMN_TYPE + " = 'problem' AND " +
+                DatabaseHelper.COLUMN_STATUS + " = 'achieved' AND " +
+                "date(" + DatabaseHelper.COLUMN_CREATED_AT + "/1000, 'unixepoch', 'localtime') = ?";
+        
+        Cursor cursor = db.rawQuery(query, new String[]{userEmail, today});
+        int count = 0;
+        if (cursor.moveToFirst()) {
+            count = cursor.getInt(0);
+        }
+        cursor.close();
+        return count;
     }
 }
