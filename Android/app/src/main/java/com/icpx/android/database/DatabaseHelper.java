@@ -39,6 +39,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Settings table columns
     public static final String COLUMN_KEY = "key";
     public static final String COLUMN_VALUE = "value";
+    // App-wide stats keys
+    public static final String KEY_ALL_TIME_SOLVE = "all_time_solve";
+    public static final String KEY_ALL_TIME_HISTORY = "all_time_history";
 
     private static DatabaseHelper instance;
 
@@ -84,10 +87,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         // Create settings table
         String createSettingsTable = "CREATE TABLE " + TABLE_SETTINGS + " (" +
-                COLUMN_KEY + " TEXT PRIMARY KEY, " +
-                COLUMN_VALUE + " TEXT" +
-                ")";
+            COLUMN_KEY + " TEXT PRIMARY KEY, " +
+            COLUMN_VALUE + " TEXT" +
+            ")";
         db.execSQL(createSettingsTable);
+        // Initialize all_time_solve and all_time_history to 0
+        db.execSQL("INSERT INTO " + TABLE_SETTINGS + " (" + COLUMN_KEY + ", " + COLUMN_VALUE + ") VALUES ('all_time_solve', '0')");
+        db.execSQL("INSERT INTO " + TABLE_SETTINGS + " (" + COLUMN_KEY + ", " + COLUMN_VALUE + ") VALUES ('all_time_history', '0')");
     }
 
     @Override

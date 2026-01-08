@@ -67,7 +67,8 @@ public class HistoryFragment extends Fragment {
         String userEmail = currentUser.getEmail();
         
         new Thread(() -> {
-            List<Target> allTargets = targetDAO.getTargetsByStatus("achieved", userEmail);
+            // Use getAchievedTargetsForHistory to include deleted items in history
+            List<Target> allTargets = targetDAO.getAchievedTargetsForHistory(userEmail);
             // Filter to show only problems (not topics)
             List<Target> problems = new ArrayList<>();
             for (Target target : allTargets) {

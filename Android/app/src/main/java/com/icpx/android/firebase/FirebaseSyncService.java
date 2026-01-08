@@ -17,6 +17,51 @@ import java.util.Map;
  * Service to synchronize data between SQLite and Firebase
  */
 public class FirebaseSyncService {
+                /**
+                 * Sync solved problems history (problem id and link) to Firebase
+                 */
+                public void syncHistoryToFirebase(FirebaseManager.FirestoreCallback callback) {
+                    FirebaseUser firebaseUser = firebaseManager.getCurrentUser();
+                    if (firebaseUser == null) {
+                        callback.onFailure(new Exception("User not authenticated"));
+                        return;
+                    }
+                    List<Target> history = targetDAO.getAchievedTargetsForHistory(firebaseUser.getEmail());
+                    List<Map<String, Object>> historyList = new java.util.ArrayList<>();
+                    for (Target t : history) {
+                        Map<String, Object> entry = new java.util.HashMap<>();
+                        entry.put("id", t.getId());
+                        entry.put("problem_link", t.getProblemLink());
+                        historyList.add(entry);
+                    }
+                    firebaseManager.updateHistory(firebaseUser.getUid(), historyList, callback);
+                }
+            public TargetDAO getTargetDAO() {
+                return targetDAO;
+            }
+        /**
+         * Sync all time stats to Firebase
+         */
+        public void syncAllTimeStatsToFirebase(int allTimeSolve, int allTimeHistory, FirebaseManager.FirestoreCallback callback) {
+            com.google.firebase.auth.FirebaseUser firebaseUser = firebaseManager.getCurrentUser();
+            if (firebaseUser == null) {
+                callback.onFailure(new Exception("User not authenticated"));
+                return;
+            }
+            firebaseManager.updateAllTimeStats(firebaseUser.getUid(), allTimeSolve, allTimeHistory, callback);
+        }
+
+        /**
+         * Fetch all time stats from Firebase
+         */
+        public void fetchAllTimeStatsFromFirebase(FirebaseManager.DataCallback callback) {
+            com.google.firebase.auth.FirebaseUser firebaseUser = firebaseManager.getCurrentUser();
+            if (firebaseUser == null) {
+                callback.onFailure(new Exception("User not authenticated"));
+                return;
+            }
+            firebaseManager.getAllTimeStats(firebaseUser.getUid(), callback);
+        }
     
     private Context context;
     private FirebaseManager firebaseManager;

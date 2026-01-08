@@ -17,6 +17,60 @@ import java.util.Map;
  * Firebase manager for authentication and Firestore operations
  */
 public class FirebaseManager {
+            /**
+             * Update solved problems history as a subcollection 'history' under the user document
+             */
+            public void updateHistory(String userId, java.util.List<java.util.Map<String, Object>> historyList, FirestoreCallback callback) {
+                if (historyList == null || historyList.isEmpty()) {
+                    callback.onSuccess();
+                    return;
+                }
+                // Use a batch write for efficiency
+                com.google.firebase.firestore.WriteBatch batch = firestore.batch();
+                for (java.util.Map<String, Object> entry : historyList) {
+                    Object idObj = entry.get("id");
+                    String docId = (idObj != null) ? String.valueOf(idObj) : java.util.UUID.randomUUID().toString();
+                    batch.set(
+                        firestore.collection("users")
+                            .document(userId)
+                            .collection("history")
+                            .document(docId),
+                        entry,
+                        SetOptions.merge()
+                    );
+                }
+                batch.commit()
+                    .addOnSuccessListener(aVoid -> callback.onSuccess())
+                    .addOnFailureListener(callback::onFailure);
+            }
+        /**
+         * Update all time stats (solve/history) in Firestore user document
+         */
+        public void updateAllTimeStats(String userId, int allTimeSolve, int allTimeHistory, FirestoreCallback callback) {
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("all_time_solve", allTimeSolve);
+            stats.put("all_time_history", allTimeHistory);
+            firestore.collection("users")
+                    .document(userId)
+                    .set(stats, SetOptions.merge())
+                    .addOnSuccessListener(aVoid -> callback.onSuccess())
+                    .addOnFailureListener(callback::onFailure);
+        }
+
+        /**
+         * Get all time stats from Firestore user document
+         */
+        public void getAllTimeStats(String userId, DataCallback callback) {
+            firestore.collection("users")
+                    .document(userId)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        java.util.List<com.google.firebase.firestore.DocumentSnapshot> list = new java.util.ArrayList<>();
+                        list.add(documentSnapshot);
+                        callback.onSuccess(list);
+                    })
+                    .addOnFailureListener(callback::onFailure);
+        }
     
     private static final String TAG = "FirebaseManager";
     private static FirebaseManager instance;

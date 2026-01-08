@@ -26,6 +26,7 @@ import com.icpx.android.model.Target;
 import com.icpx.android.service.CodeforcesService;
 import com.icpx.android.ui.dialogs.AddProblemDialog;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -159,6 +160,9 @@ public class TargetsFragment extends Fragment {
                         for (int id : selectedIds) {
                              Target t = targetDAO.getTargetById(id);
                              if (t != null) {
+                                // Delete associated PDF file
+                                deletePdfFile(t.getName());
+                                
                                 // Soft or Hard delete
                                 if ("achieved".equals(t.getStatus())) {
                                     t.setDeleted(true);
@@ -283,6 +287,9 @@ public class TargetsFragment extends Fragment {
                 .setMessage("Are you sure you want to delete \"" + target.getName() + "\"?")
                 .setPositiveButton("Delete", (dialog, which) -> {
                     new Thread(() -> {
+                        // Delete associated PDF file
+                        deletePdfFile(target.getName());
+                        
                         // Use soft delete for achieved targets to keep them in history
                         if ("achieved".equals(target.getStatus())) {
                             target.setDeleted(true);
@@ -313,6 +320,24 @@ public class TargetsFragment extends Fragment {
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+    
+    private void deletePdfFile(String problemName) {
+        try {
+            File dir = new File(requireContext().getFilesDir(), "problems");
+            if (!dir.exists()) return;
+            
+            String sanitizedName = (problemName != null ? problemName : "problem")
+                .replaceAll("[^a-zA-Z0-9.-]", "_");
+            File pdfFile = new File(dir, sanitizedName + ".pdf");
+            
+            if (pdfFile.exists()) {
+                boolean deleted = pdfFile.delete();
+                android.util.Log.d("TargetsFragment", "PDF deleted: " + deleted + " - " + pdfFile.getName());
+            }
+        } catch (Exception e) {
+            android.util.Log.e("TargetsFragment", "Error deleting PDF file", e);
+        }
     }
 
     private void onPendingClick(Target target) {

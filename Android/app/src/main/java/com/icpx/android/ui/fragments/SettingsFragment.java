@@ -367,16 +367,45 @@ public class SettingsFragment extends Fragment {
         syncService.syncTargetsToFirebase(new FirebaseSyncService.SyncCallback() {
             @Override
             public void onSuccess(String message) {
-                requireActivity().runOnUiThread(() -> {
-                    setButtonsEnabled(true);
-                    saveLastSyncTime();
-                    updateLastSyncTime();
-                    String msg = "✓ " + message;
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
-                    NotificationHelper.sendSyncNotification(requireContext(), "Upload Complete", message);
+                // After targets are synced, sync all-time stats
+                int allTimeSolve = syncService.getTargetDAO().getAllTimeSolve();
+                int allTimeHistory = syncService.getTargetDAO().getAllTimeHistory();
+                syncService.syncAllTimeStatsToFirebase(allTimeSolve, allTimeHistory, new FirebaseManager.FirestoreCallback() {
+                    @Override
+                    public void onSuccess() {
+                        // After stats, sync history
+                        syncService.syncHistoryToFirebase(new FirebaseManager.FirestoreCallback() {
+                            @Override
+                            public void onSuccess() {
+                                requireActivity().runOnUiThread(() -> {
+                                    setButtonsEnabled(true);
+                                    saveLastSyncTime();
+                                    updateLastSyncTime();
+                                    String msg = "✓ " + message + "\nAll-time stats and history synced.";
+                                    Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
+                                    NotificationHelper.sendSyncNotification(requireContext(), "Upload Complete", message + "\nAll-time stats and history synced.");
+                                });
+                            }
+                            @Override
+                            public void onFailure(Exception e) {
+                                requireActivity().runOnUiThread(() -> {
+                                    setButtonsEnabled(true);
+                                    Toast.makeText(requireContext(), "✗ History upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    NotificationHelper.sendSyncNotification(requireContext(), "History Upload Failed", e.getMessage());
+                                });
+                            }
+                        });
+                    }
+                    @Override
+                    public void onFailure(Exception e) {
+                        requireActivity().runOnUiThread(() -> {
+                            setButtonsEnabled(true);
+                            Toast.makeText(requireContext(), "✗ Stats upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            NotificationHelper.sendSyncNotification(requireContext(), "Stats Upload Failed", e.getMessage());
+                        });
+                    }
                 });
             }
-            
             @Override
             public void onFailure(Exception e) {
                 requireActivity().runOnUiThread(() -> {
@@ -398,16 +427,45 @@ public class SettingsFragment extends Fragment {
         syncService.syncTargetsFromFirebase(new FirebaseSyncService.SyncCallback() {
             @Override
             public void onSuccess(String message) {
-                requireActivity().runOnUiThread(() -> {
-                    setButtonsEnabled(true);
-                    saveLastSyncTime();
-                    updateLastSyncTime();
-                    String msg = "✓ " + message;
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
-                    NotificationHelper.sendSyncNotification(requireContext(), "Download Complete", message);
+                // After targets are downloaded, sync all-time stats
+                int allTimeSolve = syncService.getTargetDAO().getAllTimeSolve();
+                int allTimeHistory = syncService.getTargetDAO().getAllTimeHistory();
+                syncService.syncAllTimeStatsToFirebase(allTimeSolve, allTimeHistory, new FirebaseManager.FirestoreCallback() {
+                    @Override
+                    public void onSuccess() {
+                        // After stats, sync history
+                        syncService.syncHistoryToFirebase(new FirebaseManager.FirestoreCallback() {
+                            @Override
+                            public void onSuccess() {
+                                requireActivity().runOnUiThread(() -> {
+                                    setButtonsEnabled(true);
+                                    saveLastSyncTime();
+                                    updateLastSyncTime();
+                                    String msg = "✓ " + message + "\nAll-time stats and history synced.";
+                                    Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
+                                    NotificationHelper.sendSyncNotification(requireContext(), "Download Complete", message + "\nAll-time stats and history synced.");
+                                });
+                            }
+                            @Override
+                            public void onFailure(Exception e) {
+                                requireActivity().runOnUiThread(() -> {
+                                    setButtonsEnabled(true);
+                                    Toast.makeText(requireContext(), "✗ History download failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    NotificationHelper.sendSyncNotification(requireContext(), "History Download Failed", e.getMessage());
+                                });
+                            }
+                        });
+                    }
+                    @Override
+                    public void onFailure(Exception e) {
+                        requireActivity().runOnUiThread(() -> {
+                            setButtonsEnabled(true);
+                            Toast.makeText(requireContext(), "✗ Stats download failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            NotificationHelper.sendSyncNotification(requireContext(), "Stats Download Failed", e.getMessage());
+                        });
+                    }
                 });
             }
-            
             @Override
             public void onFailure(Exception e) {
                 requireActivity().runOnUiThread(() -> {
@@ -429,15 +487,44 @@ public class SettingsFragment extends Fragment {
         syncService.performFullSync(new FirebaseSyncService.SyncCallback() {
             @Override
             public void onSuccess(String message) {
-                requireActivity().runOnUiThread(() -> {
-                    setButtonsEnabled(true);
-                    saveLastSyncTime();
-                    updateLastSyncTime();
-                    Toast.makeText(requireContext(), "✓ Full sync complete!", Toast.LENGTH_LONG).show();
-                    NotificationHelper.sendSyncNotification(requireContext(), "Full Sync Complete", "Data synchronized with cloud.");
+                // After full sync, sync all-time stats
+                int allTimeSolve = syncService.getTargetDAO().getAllTimeSolve();
+                int allTimeHistory = syncService.getTargetDAO().getAllTimeHistory();
+                syncService.syncAllTimeStatsToFirebase(allTimeSolve, allTimeHistory, new FirebaseManager.FirestoreCallback() {
+                    @Override
+                    public void onSuccess() {
+                        // After stats, sync history
+                        syncService.syncHistoryToFirebase(new FirebaseManager.FirestoreCallback() {
+                            @Override
+                            public void onSuccess() {
+                                requireActivity().runOnUiThread(() -> {
+                                    setButtonsEnabled(true);
+                                    saveLastSyncTime();
+                                    updateLastSyncTime();
+                                    Toast.makeText(requireContext(), "✓ Full sync complete!\nAll-time stats and history synced.", Toast.LENGTH_LONG).show();
+                                    NotificationHelper.sendSyncNotification(requireContext(), "Full Sync Complete", "Data synchronized with cloud.\nAll-time stats and history synced.");
+                                });
+                            }
+                            @Override
+                            public void onFailure(Exception e) {
+                                requireActivity().runOnUiThread(() -> {
+                                    setButtonsEnabled(true);
+                                    Toast.makeText(requireContext(), "✗ History sync failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    NotificationHelper.sendSyncNotification(requireContext(), "History Sync Failed", e.getMessage());
+                                });
+                            }
+                        });
+                    }
+                    @Override
+                    public void onFailure(Exception e) {
+                        requireActivity().runOnUiThread(() -> {
+                            setButtonsEnabled(true);
+                            Toast.makeText(requireContext(), "✗ Stats sync failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            NotificationHelper.sendSyncNotification(requireContext(), "Stats Sync Failed", e.getMessage());
+                        });
+                    }
                 });
             }
-            
             @Override
             public void onFailure(Exception e) {
                 requireActivity().runOnUiThread(() -> {

@@ -18,6 +18,9 @@ public class ProblemTabbedActivity extends AppCompatActivity {
 
     private String problemUrl;
     private String problemName;
+    private ViewPager2 viewPager;
+    private SurfFragment surfFragment;
+    private ProblemWebViewFragment webViewFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,13 +41,28 @@ public class ProblemTabbedActivity extends AppCompatActivity {
             getSupportActionBar().setTitle(problemName != null ? problemName : "Problem");
         }
 
-        ViewPager2 viewPager = findViewById(R.id.viewPager);
+        viewPager = findViewById(R.id.viewPager);
+        TabLayout tabLayout = findViewById(R.id.tabLayout);
 
         ProblemPagerAdapter adapter = new ProblemPagerAdapter(this);
         viewPager.setAdapter(adapter);
-
-        // Disable swipe gesture
+        
+        // Disable swipe gesture between tabs
         viewPager.setUserInputEnabled(false);
+
+        // Setup TabLayout with ViewPager2
+        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
+            switch (position) {
+                case 0:
+                    tab.setText("WEB");
+                    tab.setIcon(R.drawable.ic_web);
+                    break;
+                case 1:
+                    tab.setText("PDF");
+                    tab.setIcon(R.drawable.ic_pdf);
+                    break;
+            }
+        }).attach();
         
         android.util.Log.d("ProblemTabbedActivity", "onCreate completed successfully");
     }
@@ -53,6 +71,18 @@ public class ProblemTabbedActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
+    }
+    
+    public void switchToOnlineTab() {
+        if (viewPager != null) {
+            viewPager.setCurrentItem(1, true);
+        }
+    }
+
+    public void onPdfDownloaded() {
+        if (webViewFragment != null) {
+            webViewFragment.onPdfDownloaded();
+        }
     }
 
     private class ProblemPagerAdapter extends FragmentStateAdapter {
@@ -63,12 +93,21 @@ public class ProblemTabbedActivity extends AppCompatActivity {
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            return ProblemWebViewFragment.newInstance(problemUrl, problemName);
+            switch (position) {
+                case 0:
+                    surfFragment = SurfFragment.newInstance(problemUrl);
+                    return surfFragment;
+                case 1:
+                    webViewFragment = ProblemWebViewFragment.newInstance(problemUrl, problemName);
+                    return webViewFragment;
+                default:
+                    return SurfFragment.newInstance(problemUrl);
+            }
         }
 
         @Override
         public int getItemCount() {
-            return 1;
+            return 2;
         }
     }
 }

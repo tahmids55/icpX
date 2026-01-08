@@ -13,9 +13,25 @@
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
+            android:layout_height="48dp"
+            android:minHeight="48dp"
             android:background="?attr/colorPrimary"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:background="?attr/colorPrimary"
+            app:tabMode="fixed"
+            app:tabGravity="fill"
+            app:tabTextAppearance="@style/TabTextStyle"
+            app:tabPaddingTop="4dp"
+            app:tabPaddingBottom="4dp"
+            app:tabTextColor="#80000000"
+            app:tabSelectedTextColor="#CC000000"
+            app:tabIndicatorColor="@android:color/white"
+            app:tabIndicatorHeight="2dp" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

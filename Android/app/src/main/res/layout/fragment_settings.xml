@@ -345,14 +345,15 @@
                     android:text="⬇️ Download from Cloud"
                     android:layout_marginBottom="8dp"
                     style="@style/Widget.Material3.Button.OutlinedButton"
-                    app:cornerRadius="8dp"/>
+                    app:cornerRadius="8dp"
+                    android:textSize="18sp"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/fullSyncButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="🔄 Full Sync (Bidirectional)"
-                    style="@style/Widget.Material3.Button.TonalButton"
+                    style="@style/ButtonPrimary"
                     app:cornerRadius="8dp"/>
 
                 <TextView

@@ -19,6 +19,44 @@ import java.util.Map;
  * Data Access Object for Target operations
  */
 public class TargetDAO {
+        // --- All Time Stats ---
+        public int getAllTimeSolve() {
+            SQLiteDatabase db = dbHelper.getReadableDatabase();
+            Cursor cursor = db.query(DatabaseHelper.TABLE_SETTINGS, new String[]{DatabaseHelper.COLUMN_VALUE}, DatabaseHelper.COLUMN_KEY + "=?", new String[]{DatabaseHelper.KEY_ALL_TIME_SOLVE}, null, null, null);
+            int value = 0;
+            if (cursor.moveToFirst()) {
+                value = Integer.parseInt(cursor.getString(0));
+            }
+            cursor.close();
+            return value;
+        }
+
+        public int getAllTimeHistory() {
+            SQLiteDatabase db = dbHelper.getReadableDatabase();
+            Cursor cursor = db.query(DatabaseHelper.TABLE_SETTINGS, new String[]{DatabaseHelper.COLUMN_VALUE}, DatabaseHelper.COLUMN_KEY + "=?", new String[]{DatabaseHelper.KEY_ALL_TIME_HISTORY}, null, null, null);
+            int value = 0;
+            if (cursor.moveToFirst()) {
+                value = Integer.parseInt(cursor.getString(0));
+            }
+            cursor.close();
+            return value;
+        }
+
+        public void incrementAllTimeSolve() {
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+            int current = getAllTimeSolve();
+            ContentValues values = new ContentValues();
+            values.put(DatabaseHelper.COLUMN_VALUE, String.valueOf(current + 1));
+            db.update(DatabaseHelper.TABLE_SETTINGS, values, DatabaseHelper.COLUMN_KEY + "=?", new String[]{DatabaseHelper.KEY_ALL_TIME_SOLVE});
+        }
+
+        public void incrementAllTimeHistory() {
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+            int current = getAllTimeHistory();
+            ContentValues values = new ContentValues();
+            values.put(DatabaseHelper.COLUMN_VALUE, String.valueOf(current + 1));
+            db.update(DatabaseHelper.TABLE_SETTINGS, values, DatabaseHelper.COLUMN_KEY + "=?", new String[]{DatabaseHelper.KEY_ALL_TIME_HISTORY});
+        }
     
     private DatabaseHelper dbHelper;
 
@@ -179,14 +217,14 @@ public class TargetDAO {
     /**
      * Get achieved targets for history (includes deleted items)
      */
-    public List<Target> getAchievedTargetsForHistory() {
+    public List<Target> getAchievedTargetsForHistory(String userEmail) {
         List<Target> targets = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(
                 DatabaseHelper.TABLE_TARGETS,
                 null,
-                DatabaseHelper.COLUMN_STATUS + " = ?",
-                new String[]{"achieved"},
+                DatabaseHelper.COLUMN_STATUS + " = ? AND " + DatabaseHelper.COLUMN_USER_EMAIL + " = ?",
+                new String[]{"achieved", userEmail},
                 null,
                 null,
                 DatabaseHelper.COLUMN_CREATED_AT + " DESC"

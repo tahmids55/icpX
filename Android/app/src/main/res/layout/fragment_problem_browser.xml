@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -13,12 +14,20 @@
         android:progressTint="?attr/colorPrimary"
         android:visibility="gone" />
 
-    <!-- WebView for problem statement -->
-    <WebView
-        android:id="@+id/webView"
+    <!-- SwipeRefreshLayout for pull-to-refresh -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/linearProgressBar" />
+        android:layout_below="@id/linearProgressBar">
+
+        <!-- WebView for problem statement -->
+        <WebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <!-- Progress Bar -->
     <ProgressBar
@@ -27,6 +36,45 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:visibility="gone" />
+
+    <!-- PDF Generation Progress Container -->
+    <LinearLayout
+        android:id="@+id/pdfProgressContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical"
+        android:background="?attr/colorSurface"
+        android:elevation="8dp"
+        android:padding="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/pdfStatusText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Generating PDF..."
+            android:textSize="14sp"
+            android:textColor="?android:textColorPrimary"
+            android:layout_marginBottom="8dp"/>
+
+        <ProgressBar
+            android:id="@+id/pdfProgressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:progressTint="?attr/colorPrimary"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/pdfPercentageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0%"
+            android:textSize="12sp"
+            android:textColor="?android:textColorSecondary"/>
+
+    </LinearLayout>
 
     <!-- Error Container -->
     <LinearLayout
@@ -80,5 +128,18 @@
             style="?attr/materialButtonOutlinedStyle"/>
 
     </LinearLayout>
+
+    <!-- Floating PDF Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabOpenPdf"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_pdf"
+        android:contentDescription="Open PDF"
+        android:visibility="gone"
+        app:tint="@android:color/white"/>
 
 </RelativeLayout>

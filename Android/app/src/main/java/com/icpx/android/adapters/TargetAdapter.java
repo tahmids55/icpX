@@ -19,6 +19,7 @@ import com.icpx.android.R;
 import com.icpx.android.model.Target;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -89,7 +90,7 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
         
         holder.nameTextView.setText(target.getName());
         holder.typeTextView.setText(target.getType());
-        holder.dateTextView.setText(dateFormat.format(target.getCreatedAt()));
+        holder.dateTextView.setText(target.getCreatedAt() != null ? dateFormat.format(target.getCreatedAt()) : "");
         
         // Set rating with color if available
         if (target.getRating() != null && target.getRating() > 0) {
@@ -121,7 +122,12 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
         if (isSelectionMode && "achieved".equals(target.getStatus())) {
             holder.selectionCheckBox.setVisibility(View.VISIBLE);
             holder.selectionCheckBox.setChecked(selectedItems.contains(target.getId()));
-            holder.selectionCheckBox.setOnClickListener(v -> toggleSelection(target.getId()));
+            holder.selectionCheckBox.setOnClickListener(v -> {
+                int adapterPosition = holder.getAdapterPosition();
+                if (adapterPosition != RecyclerView.NO_POSITION && adapterPosition < targets.size()) {
+                    toggleSelection(targets.get(adapterPosition).getId());
+                }
+            });
         } else {
             holder.selectionCheckBox.setVisibility(View.GONE);
         }
@@ -132,11 +138,17 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
             holder.itemView.setOnTouchListener(null); // Clear previous touch listener
             
             holder.itemView.setOnClickListener(v -> {
+                int adapterPosition = holder.getAdapterPosition();
+                if (adapterPosition == RecyclerView.NO_POSITION || adapterPosition >= targets.size()) {
+                    return;
+                }
+                Target currentTarget = targets.get(adapterPosition);
+                
                 if (isSelectionMode) {
-                    toggleSelection(target.getId());
+                    toggleSelection(currentTarget.getId());
                 } else {
                     // Open problem in offline/browser mode
-                    if (target.getProblemLink() != null && !target.getProblemLink().isEmpty()) {
+                    if (currentTarget.getProblemLink() != null && !currentTarget.getProblemLink().isEmpty()) {
                         try {
                             android.content.Intent intent = new android.content.Intent(
                                 v.getContext(), 
@@ -144,11 +156,11 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
                             );
                             intent.putExtra(
                                 com.icpx.android.ui.ProblemTabbedActivity.EXTRA_PROBLEM_URL, 
-                                target.getProblemLink()
+                                currentTarget.getProblemLink()
                             );
                             intent.putExtra(
                                 com.icpx.android.ui.ProblemTabbedActivity.EXTRA_PROBLEM_NAME, 
-                                target.getName()
+                                currentTarget.getName()
                             );
                             v.getContext().startActivity(intent);
                         } catch (Exception e) {
@@ -161,9 +173,15 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
             });
             
             holder.itemView.setOnLongClickListener(v -> {
+                int adapterPosition = holder.getAdapterPosition();
+                if (adapterPosition == RecyclerView.NO_POSITION || adapterPosition >= targets.size()) {
+                    return false;
+                }
+                Target currentTarget = targets.get(adapterPosition);
+                
                 if (!isSelectionMode) {
                     startSelectionMode();
-                    toggleSelection(target.getId()); // Select the long-pressed item
+                    toggleSelection(currentTarget.getId()); // Select the long-pressed item
                     return true;
                 }
                 return false;
@@ -173,17 +191,20 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
             holder.selectionCheckBox.setClickable(false); // Let row click handle it
         } else {
             // Default Logic for Pending/Wait: Maintain old behavior (Open/Delete Dialog)
-            setupDefaultTouchListener(holder, target);
+            setupDefaultTouchListener(holder);
         }
 
         holder.pendingButton.setOnClickListener(v -> {
-            if (pendingClickListener != null) {
-                pendingClickListener.onPendingClick(target);
+            int adapterPosition = holder.getAdapterPosition();
+            if (adapterPosition != RecyclerView.NO_POSITION && adapterPosition < targets.size()) {
+                if (pendingClickListener != null) {
+                    pendingClickListener.onPendingClick(targets.get(adapterPosition));
+                }
             }
         });
     }
     
-    private void setupDefaultTouchListener(ViewHolder holder, Target target) {
+    private void setupDefaultTouchListener(ViewHolder holder) {
         // Simple touch handling with long press (750ms)
         final Handler longPressHandler = new Handler(Looper.getMainLooper());
         final boolean[] isLongPressTriggered = {false};
@@ -191,6 +212,12 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
         final Runnable longPressRunnable = new Runnable() {
             @Override
             public void run() {
+                int adapterPosition = holder.getAdapterPosition();
+                if (adapterPosition == RecyclerView.NO_POSITION || adapterPosition >= targets.size()) {
+                    return;
+                }
+                Target currentTarget = targets.get(adapterPosition);
+                
                 isLongPressTriggered[0] = true;
                 
                 // Vibrate for feedback
@@ -206,7 +233,7 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
                 
                 // Trigger the action
                 if (listener != null) {
-                    listener.onTargetClick(target);
+                    listener.onTargetClick(currentTarget);
                 }
             }
         };
@@ -245,20 +272,26 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
                         
                         // Only open problem viewer if it was a normal tap
                         if (!isLongPressTriggered[0]) {
-                            if (target.getProblemLink() != null && !target.getProblemLink().isEmpty()) {
+                            int adapterPosition = holder.getAdapterPosition();
+                            if (adapterPosition == RecyclerView.NO_POSITION || adapterPosition >= targets.size()) {
+                                return true;
+                            }
+                            Target currentTarget = targets.get(adapterPosition);
+                            
+                            if (currentTarget.getProblemLink() != null && !currentTarget.getProblemLink().isEmpty()) {
                                 try {
-                                    android.util.Log.d("TargetAdapter", "Opening problem: " + target.getName() + " URL: " + target.getProblemLink());
+                                    android.util.Log.d("TargetAdapter", "Opening problem: " + currentTarget.getName() + " URL: " + currentTarget.getProblemLink());
                                     android.content.Intent intent = new android.content.Intent(
                                         v.getContext(), 
                                         com.icpx.android.ui.ProblemTabbedActivity.class
                                     );
                                     intent.putExtra(
                                         com.icpx.android.ui.ProblemTabbedActivity.EXTRA_PROBLEM_URL, 
-                                        target.getProblemLink()
+                                        currentTarget.getProblemLink()
                                     );
                                     intent.putExtra(
                                         com.icpx.android.ui.ProblemTabbedActivity.EXTRA_PROBLEM_NAME, 
-                                        target.getName()
+                                        currentTarget.getName()
                                     );
                                     v.getContext().startActivity(intent);
                                     android.util.Log.d("TargetAdapter", "Activity started successfully");
@@ -284,7 +317,7 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
 
     @Override
     public int getItemCount() {
-        return targets.size();
+        return targets != null ? targets.size() : 0;
     }
     
     public void startSelectionMode() {
@@ -318,9 +351,11 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
     
     public void selectAllAchieved() {
         selectedItems.clear();
-        for (Target t : targets) {
-            if ("achieved".equals(t.getStatus())) {
-                selectedItems.add(t.getId());
+        if (targets != null) {
+            for (Target t : targets) {
+                if ("achieved".equals(t.getStatus())) {
+                    selectedItems.add(t.getId());
+                }
             }
         }
         notifyDataSetChanged();
@@ -338,7 +373,7 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
     }
 
     public void updateData(List<Target> newTargets) {
-        this.targets = newTargets;
+        this.targets = newTargets != null ? newTargets : new ArrayList<>();
         notifyDataSetChanged();
     }
 
