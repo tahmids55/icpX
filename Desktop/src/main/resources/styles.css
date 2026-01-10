@@ -199,6 +199,82 @@
     -fx-effect: dropshadow(gaussian, rgba(199,46,46,0.5), 8, 0, 0, 2);
 }
 
+/* Google Sign-In Button - Following Google Branding Guidelines */
+.button-google {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #3c4043;
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-padding: 10 24 10 12;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #dadce0;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 2);
+    -fx-graphic-text-gap: 10;
+}
+
+.button-google:hover {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #c6c9cc;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 6, 0, 0, 3);
+}
+
+.button-google:pressed {
+    -fx-background-color: #e8eaed;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 2, 0, 0, 1);
+}
+
+.dark-theme .button-google {
+    -fx-background-color: #4285f4;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #4285f4;
+    -fx-effect: dropshadow(gaussian, rgba(66,133,244,0.3), 6, 0, 0, 2);
+}
+
+.dark-theme .button-google:hover {
+    -fx-background-color: #5a95f5;
+    -fx-border-color: #5a95f5;
+    -fx-effect: dropshadow(gaussian, rgba(66,133,244,0.5), 8, 0, 0, 3);
+}
+
+.dark-theme .button-google:pressed {
+    -fx-background-color: #3367d6;
+    -fx-border-color: #3367d6;
+}
+
+/* Primary Button Enhancement */
+.button-primary {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-padding: 10 24;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(37,99,235,0.3), 8, 0, 0, 2);
+}
+
+.button-primary:hover {
+    -fx-background-color: #1d4ed8;
+    -fx-effect: dropshadow(gaussian, rgba(37,99,235,0.4), 10, 0, 0, 3);
+}
+
+.button-primary:pressed {
+    -fx-background-color: #1e40af;
+}
+
+.dark-theme .button-primary {
+    -fx-background-color: #0e639c;
+    -fx-effect: dropshadow(gaussian, rgba(0,122,204,0.3), 6, 0, 0, 2);
+}
+
+.dark-theme .button-primary:hover {
+    -fx-background-color: #1177bb;
+    -fx-effect: dropshadow(gaussian, rgba(0,122,204,0.5), 8, 0, 0, 3);
+}
+
 /* Dashboard Styles */
 .topbar {
     -fx-background-color: #f8fafc;

@@ -18,16 +18,42 @@
          </font></Text>
       <Text text="Track your competitive programming journey" />
       <VBox prefHeight="10.0" />
-      <HBox fx:id="statsContainer" alignment="CENTER_LEFT" spacing="20.0" />
+      <VBox fx:id="ratingBarContainer" spacing="10.0" />
+      
+      <javafx.scene.control.TabPane fx:id="statsTabPane" tabClosingPolicy="UNAVAILABLE">
+        <tabs>
+          <javafx.scene.control.Tab text="Daily Stats">
+            <content>
+              <HBox fx:id="dailyStatsContainer" alignment="CENTER_LEFT" spacing="20.0" style="-fx-padding: 10 0 10 0;" />
+            </content>
+          </javafx.scene.control.Tab>
+          <javafx.scene.control.Tab text="All-Time Stats">
+            <content>
+              <HBox fx:id="allTimeStatsContainer" alignment="CENTER_LEFT" spacing="20.0" style="-fx-padding: 10 0 10 0;" />
+            </content>
+          </javafx.scene.control.Tab>
+        </tabs>
+      </javafx.scene.control.TabPane>
       
       <VBox maxWidth="1.7976931348623157E308" spacing="15.0">
          <padding>
             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
          </padding>
          <children>
-            <Text style="-fx-font-size: 18px;" text="Rating Graph" />
+            <Text style="-fx-font-size: 18px;" text="Personal Rating History" />
             <Separator />
             <VBox fx:id="ratingGraphContainer" alignment="CENTER" prefHeight="300.0" spacing="10.0" />
+         </children>
+      </VBox>
+
+      <VBox maxWidth="1.7976931348623157E308" spacing="15.0">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <children>
+            <Text style="-fx-font-size: 18px;" text="Recent Targets" />
+            <Separator />
+            <VBox fx:id="recentTargetsContainer" spacing="10.0" />
          </children>
       </VBox>
       

@@ -10,22 +10,26 @@ import java.sql.Statement;
  */
 public class DatabaseHelper {
     private static final String DB_URL = "jdbc:sqlite:icpx.db";
-    private static Connection connection;
+    private static boolean isInitialized = false;
 
     /**
-     * Get database connection (singleton pattern)
+     * Get a new database connection.
+     * Callers are responsible for closing this connection.
      */
     public static Connection getConnection() throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(DB_URL);
-            initializeDatabase();
-            // Run migrations for existing databases
-            DatabaseMigration.runMigrations(connection);
+        Connection conn = DriverManager.getConnection(DB_URL);
+        
+        if (!isInitialized) {
+            initializeDatabase(conn);
+            isInitialized = true;
         }
-        return connection;
+        
+        return conn;
     }
 
-    private static void initializeDatabase() throws SQLException {
+    private static synchronized void initializeDatabase(Connection conn) throws SQLException {
+        if (isInitialized) return;
+
         String createUsersTable = "CREATE TABLE IF NOT EXISTS users (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "username TEXT NOT NULL UNIQUE, " +
@@ -51,23 +55,20 @@ public class DatabaseHelper {
                 "value TEXT" +
                 ")";
 
-        try (Statement stmt = connection.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.execute(createUsersTable);
             stmt.execute(createTargetsTable);
             stmt.execute(createSettingsTable);
         }
+        
+        // Run migrations
+        DatabaseMigration.runMigrations(conn);
     }
 
     /**
-     * Close database connection
+     * Close database connection (No-op in new design as connections are managed by caller)
      */
     public static void closeConnection() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        // No-op
     }
 }

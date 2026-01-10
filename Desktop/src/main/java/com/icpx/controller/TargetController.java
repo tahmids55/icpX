@@ -90,6 +90,7 @@ public class TargetController {
             controller.initialize(
                 target,
                 () -> openLink(target.getProblemLink()),
+                () -> openPdf(target.getProblemLink()),
                 () -> checkProblemStatus(target),
                 () -> deleteTarget(target)
             );
@@ -99,6 +100,33 @@ public class TargetController {
             e.printStackTrace();
             return new HBox();
         }
+    }
+
+    private void openPdf(String url) {
+        if (url == null || url.isEmpty()) return;
+
+        String pdfUrl = url;
+        // Codeforces logic: contest/123/problem/A -> contest/123/problems.pdf
+        if (url.contains("codeforces.com/contest/")) {
+            String[] parts = url.split("/");
+            for (int i = 0; i < parts.length; i++) {
+                if (parts[i].equals("contest") && i + 1 < parts.length) {
+                    pdfUrl = "https://codeforces.com/contest/" + parts[i+1] + "/problems.pdf";
+                    break;
+                }
+            }
+        } else if (url.contains("codeforces.com/problemset/problem/")) {
+            // Problemset logic: problemset/problem/123/A -> contest/123/problems.pdf
+             String[] parts = url.split("/");
+             for (int i = 0; i < parts.length; i++) {
+                if (parts[i].equals("problem") && i + 1 < parts.length) {
+                    pdfUrl = "https://codeforces.com/contest/" + parts[i+1] + "/problems.pdf";
+                    break;
+                }
+            }
+        }
+
+        openLink(pdfUrl);
     }
 
     @FXML
@@ -292,9 +320,12 @@ public class TargetController {
                 Platform.runLater(() -> {
                     if (accepted) {
                         target.setStatus("achieved");
-                        TargetDAO.updateTargetStatus(target.getId(), "achieved");
+                        double ratingChange = TargetDAO.updateTargetStatusWithRating(target.getId(), "achieved");
+                        String ratingMsg = ratingChange >= 0 ? 
+                            String.format(" Rating +%.2f", ratingChange) : 
+                            String.format(" Rating %.2f (late penalty)", ratingChange);
                         showAlert(Alert.AlertType.INFORMATION, "Success!", 
-                            "Problem accepted! Target achieved! 🎉");
+                            "Problem accepted! Target achieved! 🎉" + ratingMsg);
                     } else {
                         target.setStatus("failed");
                         TargetDAO.updateTargetStatus(target.getId(), "failed");
@@ -352,6 +383,51 @@ public class TargetController {
         } catch (Exception e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to open link");
+        }
+    }
+
+    @FXML
+    private void fetchRatings() {
+        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmAlert.setTitle("Fetch Ratings");
+        confirmAlert.setHeaderText("Fetch problem ratings from Codeforces?");
+        confirmAlert.setContentText("This will update ratings for all Codeforces problems. Continue?");
+        
+        Optional<ButtonType> result = confirmAlert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            new Thread(() -> {
+                List<Target> targets = TargetDAO.getAllTargets();
+                int updated = 0;
+                int total = 0;
+                
+                for (Target target : targets) {
+                    if ("problem".equals(target.getType()) && target.getProblemLink() != null 
+                        && target.getProblemLink().contains("codeforces.com")) {
+                        total++;
+                        Integer rating = codeforcesService.fetchProblemRatingFromUrl(target.getProblemLink());
+                        if (rating != null && rating > 0) {
+                            if (TargetDAO.updateTargetRating(target.getId(), rating)) {
+                                updated++;
+                            }
+                        }
+                        // Small delay to avoid rate limiting
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
+                }
+                
+                final int finalUpdated = updated;
+                final int finalTotal = total;
+                Platform.runLater(() -> {
+                    refreshTargetList();
+                    showAlert(Alert.AlertType.INFORMATION, "Success", 
+                        String.format("Updated %d/%d Codeforces problems with ratings", finalUpdated, finalTotal));
+                });
+            }).start();
         }
     }
 

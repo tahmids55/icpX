@@ -16,6 +16,12 @@
       <VBox fx:id="nameSection" spacing="5.0" HBox.hgrow="ALWAYS">
          <children>
             <Text fx:id="nameText" style="-fx-font-size: 16px;" styleClass="label" />
+            <HBox spacing="10.0">
+               <children>
+                  <Label fx:id="ratingLabel" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 2 8 2 8; -fx-background-radius: 4px;" />
+                  <Label fx:id="deadlineLabel" style="-fx-font-size: 11px; -fx-padding: 2 8 2 8; -fx-background-radius: 4px;" />
+               </children>
+            </HBox>
          </children>
       </VBox>
       
@@ -27,6 +33,7 @@
       
       <HBox alignment="CENTER_RIGHT" spacing="10.0">
          <children>
+            <Button fx:id="pdfBtn" mnemonicParsing="false" onAction="#handlePdf" styleClass="button, button-secondary" text="📄 PDF" />
             <Button fx:id="linkBtn" mnemonicParsing="false" onAction="#handleLink" styleClass="button, button-secondary" text="🔗 Link" />
             <Button fx:id="checkBtn" mnemonicParsing="false" onAction="#handleCheck" styleClass="button, button-primary" text="✓ Check" />
             <Button fx:id="deleteBtn" mnemonicParsing="false" onAction="#handleDelete" styleClass="button, button-danger" text="🗑" />

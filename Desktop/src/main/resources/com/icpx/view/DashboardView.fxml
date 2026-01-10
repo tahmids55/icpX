@@ -46,6 +46,9 @@
             <Separator />
             <Button onAction="#showDashboard" prefWidth="210.0" text="📊 Dashboard" />
             <Button onAction="#showTargets" prefWidth="210.0" text="🎯 Target Section" />
+            <Button onAction="#showContests" prefWidth="210.0" text="🏆 Contests" />
+            <Button onAction="#showHistory" prefWidth="210.0" text="📜 History" />
+            <Button onAction="#showFriends" prefWidth="210.0" text="👥 Friends" />
             <Button onAction="#showSettings" prefWidth="210.0" text="⚙️ Settings" />
          </children>
       </VBox>

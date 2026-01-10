@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.icpx.model.Contest;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -23,6 +24,66 @@ import java.util.regex.Pattern;
 public class CodeforcesService {
 
     private static final String CODEFORCES_API_URL = "https://codeforces.com/api";
+
+    /**
+     * Fetch list of contests from Codeforces API
+     * @param gym if true, fetch gym contests; if false, fetch regular contests
+     * @return List of contests
+     */
+    public List<Contest> fetchContests(boolean gym) throws IOException {
+        String apiUrl = CODEFORCES_API_URL + "/contest.list?gym=" + gym;
+        List<Contest> contests = new ArrayList<>();
+
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpGet request = new HttpGet(apiUrl);
+            
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode != 200) {
+                    System.err.println("Codeforces API returned status: " + statusCode);
+                    throw new IOException("Failed to fetch contests: status " + statusCode);
+                }
+
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    String jsonString = EntityUtils.toString(entity);
+                    JsonObject jsonResponse = JsonParser.parseString(jsonString).getAsJsonObject();
+                    
+                    if (!"OK".equals(jsonResponse.get("status").getAsString())) {
+                        String errorMsg = jsonResponse.has("comment") ? jsonResponse.get("comment").getAsString() : "Unknown error";
+                        throw new IOException("Codeforces API error: " + errorMsg);
+                    }
+
+                    JsonArray contestsArray = jsonResponse.getAsJsonArray("result");
+                    
+                    for (JsonElement element : contestsArray) {
+                        JsonObject contestJson = element.getAsJsonObject();
+                        Contest contest = new Contest();
+                        
+                        contest.setId(contestJson.get("id").getAsInt());
+                        contest.setName(contestJson.get("name").getAsString());
+                        contest.setType(contestJson.has("type") ? contestJson.get("type").getAsString() : "");
+                        contest.setPhase(contestJson.get("phase").getAsString());
+                        contest.setFrozen(contestJson.has("frozen") && contestJson.get("frozen").getAsBoolean());
+                        contest.setDurationSeconds(contestJson.get("durationSeconds").getAsLong());
+                        
+                        if (contestJson.has("startTimeSeconds")) {
+                            contest.setStartTimeSeconds(contestJson.get("startTimeSeconds").getAsLong());
+                        }
+                        
+                        if (contestJson.has("relativeTimeSeconds")) {
+                            contest.setRelativeTimeSeconds(contestJson.get("relativeTimeSeconds").getAsLong());
+                        }
+                        
+                        contests.add(contest);
+                    }
+                }
+            }
+        }
+        
+        return contests;
+    }
+
 
     /**
      * Check if a user has accepted a specific problem
@@ -281,6 +342,79 @@ public class CodeforcesService {
             this.name = name;
             this.rating = rating;
         }
+    }
+
+    /**
+     * Fetch rating for a specific Codeforces problem
+     * @param contestId Contest ID
+     * @param problemIndex Problem index (A, B, C, etc.)
+     * @return Problem rating or null if not found
+     */
+    public Integer fetchProblemRating(String contestId, String problemIndex) {
+        try {
+            String apiUrl = CODEFORCES_API_URL + "/problemset.problems";
+            
+            try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+                HttpGet request = new HttpGet(apiUrl);
+                
+                try (CloseableHttpResponse response = httpClient.execute(request)) {
+                    if (response.getStatusLine().getStatusCode() != 200) {
+                        return null;
+                    }
+                    
+                    HttpEntity entity = response.getEntity();
+                    if (entity != null) {
+                        String jsonString = EntityUtils.toString(entity);
+                        JsonObject jsonResponse = JsonParser.parseString(jsonString).getAsJsonObject();
+                        
+                        if ("OK".equals(jsonResponse.get("status").getAsString())) {
+                            JsonArray problems = jsonResponse.getAsJsonObject("result").getAsJsonArray("problems");
+                            
+                            for (JsonElement element : problems) {
+                                JsonObject problem = element.getAsJsonObject();
+                                if (problem.has("contestId") && problem.has("index")) {
+                                    int pContestId = problem.get("contestId").getAsInt();
+                                    String pIndex = problem.get("index").getAsString();
+                                    
+                                    if (String.valueOf(pContestId).equals(contestId) && pIndex.equals(problemIndex)) {
+                                        if (problem.has("rating")) {
+                                            return problem.get("rating").getAsInt();
+                                        }
+                                        return null;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching problem rating: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Fetch rating from Codeforces problem URL
+     * @param problemUrl Full URL like https://codeforces.com/contest/1234/problem/A
+     * @return Problem rating or null if not found/not a valid CF URL
+     */
+    public Integer fetchProblemRatingFromUrl(String problemUrl) {
+        if (problemUrl == null || !problemUrl.contains("codeforces.com")) {
+            return null;
+        }
+        
+        // Parse URL to extract contest ID and problem index
+        Pattern pattern = Pattern.compile("codeforces\\.com/(?:contest|problemset/problem)/(\\d+)/(?:problem/)?(\\w+)");
+        Matcher matcher = pattern.matcher(problemUrl);
+        
+        if (matcher.find()) {
+            String contestId = matcher.group(1);
+            String problemIndex = matcher.group(2);
+            return fetchProblemRating(contestId, problemIndex);
+        }
+        
+        return null;
     }
 
     /**

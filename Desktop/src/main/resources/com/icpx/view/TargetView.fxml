@@ -22,6 +22,7 @@
                   <Font name="System Bold" size="13.0" />
                </font></Text>
             <Region HBox.hgrow="ALWAYS" />
+            <Button onAction="#fetchRatings" text="⭐ Fetch Ratings" />
             <Button onAction="#showAddProblemDialog" text="➕ Add Problem" />
             <Button onAction="#showAddTopicDialog" text="📚 Add Topic" />
             <Button onAction="#showImportContestDialog" text="📥 Import Contest" />

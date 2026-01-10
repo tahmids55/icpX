@@ -44,5 +44,55 @@
             <Text text="When enabled, you'll need to enter your password each time you open the app" />
          </children>
       </VBox>
+
+      <VBox maxWidth="600.0" spacing="15.0">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <children>
+            <Text style="-fx-font-size: 18px;" text="Contest Reminders" />
+            <Separator />
+            <CheckBox fx:id="contestRemindersCheckbox" onAction="#toggleContestReminders" text="Enable upcoming contest reminders" />
+            <Text text="Get desktop notifications 30 minutes before Codeforces contests start" />
+         </children>
+      </VBox>
+      
+      <VBox maxWidth="600.0" spacing="15.0">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <children>
+            <Text style="-fx-font-size: 18px;" text="Account (Firebase)" />
+            <Separator />
+             <VBox fx:id="loginBox" spacing="10.0">
+                <children>
+                    <TextField fx:id="emailField" promptText="Email" />
+                    <TextField fx:id="passwordField" promptText="Password" />
+                    <HBox spacing="10.0">
+                        <Button fx:id="loginBtn" onAction="#login" styleClass="button-primary" text="Sign In" />
+                        <Button fx:id="googleLoginBtn" onAction="#loginWithGoogle" styleClass="button-google" text="Sign in with Google" />
+                    </HBox>
+                </children>
+             </VBox>
+            <VBox fx:id="loggedInBox" visible="false" managed="false" spacing="10.0">
+               <children>
+                   <Text fx:id="userEmailText" text="Logged in as: user@example.com" />
+                   <Button onAction="#logout" text="Sign Out" />
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+
+      <VBox maxWidth="600.0" spacing="15.0">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <children>
+            <Text style="-fx-font-size: 18px;" text="Cloud Sync" />
+            <Separator />
+            <Button fx:id="fullSyncBtn" onAction="#fullSync" text="🔄 Full Sync" disable="true" styleClass="button-primary"/>
+            <Text fx:id="syncStatusText" text="Status: Not logged in" />
+         </children>
+      </VBox>
    </children>
 </VBox>

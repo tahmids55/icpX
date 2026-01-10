@@ -13,11 +13,31 @@ public class Target {
     private String topicName;
     private String websiteUrl;
     private LocalDateTime createdAt;
+    private LocalDateTime deadline; // 24h deadline for rating penalty
     private String status; // "pending", "achieved", "failed"
     private Integer rating; // Problem rating (difficulty)
+    private boolean archived; // Soft delete status
+
+    public boolean isArchived() {
+        return archived;
+    }
+
+    public void setArchived(boolean archived) {
+        this.archived = archived;
+    }
+
+    public LocalDateTime getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
+    }
 
     public Target() {
         this.status = "pending";
+        this.createdAt = LocalDateTime.now();
+        this.deadline = LocalDateTime.now().plusHours(24); // Default 24h deadline
     }
 
     public Target(String type, String name) {

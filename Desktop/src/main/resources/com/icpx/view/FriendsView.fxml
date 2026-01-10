@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<VBox spacing="20.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.icpx.controller.FriendsController">
+   <padding>
+      <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+   </padding>
+   <children>
+      <Text style="-fx-font-size: 24px; -fx-font-weight: bold;" text="👥 Friends" />
+      <Text text="Add friends to view their ratings and activity" />
+      
+      <VBox maxWidth="600.0" spacing="15.0" style="-fx-background-color: #1a1a2e; -fx-background-radius: 10;">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <children>
+            <Text style="-fx-font-size: 16px;" text="Add Friend" />
+            <Separator />
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                  <TextField fx:id="friendEmailField" prefWidth="350.0" promptText="Enter friend's email address" />
+                  <Button fx:id="addFriendBtn" onAction="#addFriend" styleClass="button-primary" text="Add Friend" />
+               </children>
+            </HBox>
+            <Text fx:id="statusText" style="-fx-fill: #888;" text="" />
+         </children>
+      </VBox>
+      
+      <VBox spacing="15.0" VBox.vgrow="ALWAYS">
+         <padding>
+            <Insets bottom="10.0" top="10.0" />
+         </padding>
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="20.0">
+               <children>
+                  <Text style="-fx-font-size: 18px;" text="Your Friends" />
+                  <Button fx:id="refreshBtn" onAction="#refreshFriends" text="🔄 Refresh" />
+               </children>
+            </HBox>
+            <Separator />
+            <VBox fx:id="friendsContainer" spacing="10.0" VBox.vgrow="ALWAYS" />
+         </children>
+      </VBox>
+   </children>
+</VBox>

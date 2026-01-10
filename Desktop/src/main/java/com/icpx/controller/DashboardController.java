@@ -90,8 +90,46 @@ public class DashboardController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent content = loader.load();
             contentScrollPane.setContent(content);
+            
+            // Increase scroll speed for the loaded content
+            setupScrollSpeed(content);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * Setup faster scroll speed for content
+     */
+    private void setupScrollSpeed(Parent content) {
+        content.setOnScroll(event -> {
+            double deltaY = event.getDeltaY() * 3; // Multiply scroll speed by 3
+            double contentHeight = content.getBoundsInLocal().getHeight();
+            double viewportHeight = contentScrollPane.getViewportBounds().getHeight();
+            
+            if (contentHeight > viewportHeight) {
+                double scrollAmount = deltaY / (contentHeight - viewportHeight);
+                double newValue = contentScrollPane.getVvalue() - scrollAmount;
+                // Clamp between 0 and 1
+                newValue = Math.max(0, Math.min(1, newValue));
+                contentScrollPane.setVvalue(newValue);
+            }
+            event.consume();
+        });
+    }
+
+    @FXML
+    private void showContests() {
+        loadContent("/com/icpx/view/ContestsView.fxml");
+    }
+
+    @FXML
+    private void showHistory() {
+        loadContent("/com/icpx/view/HistoryView.fxml");
+    }
+    
+    @FXML
+    private void showFriends() {
+        loadContent("/com/icpx/view/FriendsView.fxml");
     }
 }

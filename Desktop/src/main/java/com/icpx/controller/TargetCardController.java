@@ -8,6 +8,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 /**
  * Controller for individual target card items.
  */
@@ -23,6 +26,15 @@ public class TargetCardController {
     private Label statusLabel;
 
     @FXML
+    private Label ratingLabel;
+    
+    @FXML
+    private Label deadlineLabel;
+
+    @FXML
+    private Button pdfBtn;
+
+    @FXML
     private Button linkBtn;
 
     @FXML
@@ -32,11 +44,13 @@ public class TargetCardController {
     private Button deleteBtn;
 
     private Runnable onLinkAction;
+    private Runnable onPdfAction;
     private Runnable onCheckAction;
     private Runnable onDeleteAction;
 
-    public void initialize(Target target, Runnable onLink, Runnable onCheck, Runnable onDelete) {
+    public void initialize(Target target, Runnable onLink, Runnable onPdf, Runnable onCheck, Runnable onDelete) {
         this.onLinkAction = onLink;
+        this.onPdfAction = onPdf;
         this.onCheckAction = onCheck;
         this.onDeleteAction = onDelete;
 
@@ -68,6 +82,8 @@ public class TargetCardController {
         boolean isProblem = "problem".equals(target.getType());
         linkBtn.setVisible(isProblem);
         linkBtn.setManaged(isProblem);
+        pdfBtn.setVisible(isProblem);
+        pdfBtn.setManaged(isProblem);
         checkBtn.setVisible(isProblem);
         checkBtn.setManaged(isProblem);
 
@@ -75,12 +91,90 @@ public class TargetCardController {
         if (isProblem && "achieved".equals(target.getStatus())) {
             checkBtn.setDisable(true);
         }
+
+        // Set rating label and color
+        if (target.getRating() != null && target.getRating() > 0) {
+            ratingLabel.setText("★ " + target.getRating());
+            int rating = target.getRating();
+            String color;
+            if (rating < 1300) {
+                color = "#43a047"; // Green - Easy
+            } else if (rating < 1800) {
+                color = "#fb8c00"; // Orange - Medium
+            } else {
+                color = "#e53935"; // Red - Hard
+            }
+            ratingLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 2 8 2 8; -fx-background-radius: 4px; -fx-background-color: " + color + "; -fx-text-fill: white;");
+            ratingLabel.setVisible(true);
+            ratingLabel.setManaged(true);
+        } else {
+            ratingLabel.setVisible(false);
+            ratingLabel.setManaged(false);
+        }
+        
+        // Set deadline countdown
+        if (target.getDeadline() != null && !"achieved".equals(target.getStatus())) {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime deadline = target.getDeadline();
+            
+            if (now.isBefore(deadline)) {
+                // Time remaining
+                Duration remaining = Duration.between(now, deadline);
+                long hours = remaining.toHours();
+                long minutes = remaining.toMinutes() % 60;
+                
+                String timeText;
+                String bgColor;
+                if (hours >= 12) {
+                    timeText = "⏰ " + hours + "h left";
+                    bgColor = "#4CAF50"; // Green
+                } else if (hours >= 1) {
+                    timeText = "⏰ " + hours + "h " + minutes + "m left";
+                    bgColor = "#FF9800"; // Orange
+                } else {
+                    timeText = "⏰ " + minutes + "m left";
+                    bgColor = "#F44336"; // Red
+                }
+                
+                deadlineLabel.setText(timeText);
+                deadlineLabel.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; -fx-background-radius: 4px; -fx-background-color: " + bgColor + "; -fx-text-fill: white;");
+                deadlineLabel.setVisible(true);
+                deadlineLabel.setManaged(true);
+            } else {
+                // Overdue
+                Duration overdue = Duration.between(deadline, now);
+                long hours = overdue.toHours();
+                long minutes = overdue.toMinutes() % 60;
+                
+                String timeText;
+                if (hours >= 1) {
+                    timeText = "⚠ " + hours + "h " + minutes + "m late (-" + String.format("%.2f", (hours * 60 + minutes) * 0.01) + ")";
+                } else {
+                    timeText = "⚠ " + minutes + "m late (-" + String.format("%.2f", minutes * 0.01) + ")";
+                }
+                
+                deadlineLabel.setText(timeText);
+                deadlineLabel.setStyle("-fx-font-size: 11px; -fx-padding: 2 8 2 8; -fx-background-radius: 4px; -fx-background-color: #B71C1C; -fx-text-fill: white;");
+                deadlineLabel.setVisible(true);
+                deadlineLabel.setManaged(true);
+            }
+        } else {
+            deadlineLabel.setVisible(false);
+            deadlineLabel.setManaged(false);
+        }
     }
 
     @FXML
     private void handleLink() {
         if (onLinkAction != null) {
             onLinkAction.run();
+        }
+    }
+
+    @FXML
+    private void handlePdf() {
+        if (onPdfAction != null) {
+            onPdfAction.run();
         }
     }
 
