@@ -148,7 +148,7 @@ public class FriendsService {
             String friendEmailLower = friendEmail.toLowerCase();
             String currentUid = AuthService.getCurrentUserId();
             String friendUid = null;
-            Double rating = 5.0; // Default rating (scale 1-10)
+            Double rating = 0.0; // Default rating (scale 0-10)
             
             // FIRST: Check if we already have the friend's UID stored in our friends collection
             try {

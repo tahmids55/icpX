@@ -614,12 +614,12 @@ public class TargetDAO {
                 null, null, null
         );
         
-        double rating = 5.0; // Default rating (scale 1-10)
+        double rating = 0.0; // Default rating (scale 0-10)
         if (cursor.moveToFirst()) {
             try {
                 rating = Double.parseDouble(cursor.getString(0));
             } catch (NumberFormatException e) {
-                rating = 5.0;
+                rating = 0.0;
             }
         }
         cursor.close();

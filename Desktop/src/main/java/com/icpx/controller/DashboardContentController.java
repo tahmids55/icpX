@@ -83,7 +83,7 @@ public class DashboardContentController {
         
         // Normalize rating if it's from the old scale (e.g. 1500)
         if (rating > 10.0) {
-            rating = 5.0;
+            rating = 0.0;
             SettingsDAO.setUserRating(rating);
         }
         

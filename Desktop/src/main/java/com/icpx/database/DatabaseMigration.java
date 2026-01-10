@@ -158,7 +158,7 @@ public class DatabaseMigration {
      * Add user_rating to settings table
      */
     public static void addUserRatingToSettings(Connection conn) {
-        String sql = "INSERT OR IGNORE INTO settings (key, value) VALUES ('user_rating', '5.0')";
+        String sql = "INSERT OR IGNORE INTO settings (key, value) VALUES ('user_rating', '0.0')";
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
             System.out.println("Initialized user_rating setting");
