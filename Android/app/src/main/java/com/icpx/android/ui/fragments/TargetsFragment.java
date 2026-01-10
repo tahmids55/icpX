@@ -489,10 +489,20 @@ public class TargetsFragment extends Fragment {
 
     private void updateTargetStatus(Target target, String newStatus) {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        String userEmail = currentUser != null ? currentUser.getEmail() : "";
         
         new Thread(() -> {
             target.setStatus(newStatus);
-            targetDAO.updateTarget(target);
+            
+            // Use rating-aware update when marking as achieved
+            double ratingChange = 0;
+            if ("achieved".equals(newStatus)) {
+                ratingChange = targetDAO.updateTargetStatusWithRating(target.getId(), newStatus, userEmail);
+            } else {
+                targetDAO.updateTarget(target);
+            }
+            
+            final double finalRatingChange = ratingChange;
             
             // Auto-sync to Firebase
             if (currentUser != null) {
@@ -503,7 +513,11 @@ public class TargetsFragment extends Fragment {
                 String message = "";
                 switch (newStatus) {
                     case "achieved":
-                        message = "Marked as Solved! 🎉";
+                        if (finalRatingChange >= 0) {
+                            message = String.format("Marked as Solved! 🎉 Rating +%.2f", finalRatingChange);
+                        } else {
+                            message = String.format("Marked as Solved! 🎉 Rating %.2f (late)", finalRatingChange);
+                        }
                         break;
                     case "failed":
                         message = "Marked as Failed";

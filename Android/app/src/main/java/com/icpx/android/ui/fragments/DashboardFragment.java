@@ -19,16 +19,22 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.icpx.android.R;
 import com.icpx.android.adapters.StatsPagerAdapter;
 import com.icpx.android.adapters.TargetAdapter;
 import com.icpx.android.database.TargetDAO;
+import com.icpx.android.firebase.FirebaseManager;
 import com.icpx.android.model.Target;
 import com.icpx.android.ui.views.ActivityHeatmapView;
 import com.icpx.android.ui.views.PersonalRatingBarView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -40,13 +46,20 @@ public class DashboardFragment extends Fragment {
     private TabLayout statsTabLayout;
     private RecyclerView recentTargetsRecyclerView;
     private TextView emptyStateText;
+    private TextView ratingValueText;
     private MaterialButton viewAllButton;
+    private MaterialButton prevMonthButton;
+    private MaterialButton nextMonthButton;
+    private TextView currentMonthText;
     private ActivityHeatmapView activityHeatmap;
     private PersonalRatingBarView personalRatingBar;
     
     private StatsPagerAdapter statsPagerAdapter;
     private TargetAdapter targetAdapter;
+    private FirebaseManager firebaseManager;
     private TargetDAO targetDAO;
+    
+    private SimpleDateFormat monthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
 
     @Nullable
     @Override
@@ -55,10 +68,12 @@ public class DashboardFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_dashboard, container, false);
         
         initViews(view);
+        firebaseManager = FirebaseManager.getInstance();
         targetDAO = new TargetDAO(requireContext());
         
         setupStatsViewPager();
         setupRecentTargetsRecyclerView();
+        setupMonthNavigation();
         loadData();
         
         return view;
@@ -72,9 +87,43 @@ public class DashboardFragment extends Fragment {
         viewAllButton = view.findViewById(R.id.viewAllButton);
         activityHeatmap = view.findViewById(R.id.activityHeatmap);
         personalRatingBar = view.findViewById(R.id.personalRatingBar);
+        ratingValueText = view.findViewById(R.id.ratingValueText);
+        prevMonthButton = view.findViewById(R.id.prevMonthButton);
+        nextMonthButton = view.findViewById(R.id.nextMonthButton);
+        currentMonthText = view.findViewById(R.id.currentMonthText);
         
         // Set click listener for View All button
         viewAllButton.setOnClickListener(v -> navigateToTargets());
+        
+        // Update current month text
+        updateMonthText();
+    }
+    
+    private void setupMonthNavigation() {
+        prevMonthButton.setOnClickListener(v -> {
+            int currentOffset = activityHeatmap.getMonthOffset();
+            activityHeatmap.setMonthOffset(currentOffset - 1);
+            updateMonthText();
+        });
+        
+        nextMonthButton.setOnClickListener(v -> {
+            int currentOffset = activityHeatmap.getMonthOffset();
+            // Don't allow going beyond current month
+            if (currentOffset < 0) {
+                activityHeatmap.setMonthOffset(currentOffset + 1);
+                updateMonthText();
+            }
+        });
+    }
+    
+    private void updateMonthText() {
+        Calendar cal = Calendar.getInstance();
+        int offset = activityHeatmap.getMonthOffset();
+        cal.add(Calendar.MONTH, offset);
+        currentMonthText.setText(monthYearFormat.format(cal.getTime()));
+        
+        // Disable next button if at current month
+        nextMonthButton.setEnabled(offset < 0);
     }
 
     private void setupStatsViewPager() {
@@ -119,17 +168,31 @@ public class DashboardFragment extends Fragment {
             List<Target> allTargets = targetDAO.getAllTargets(userEmail);
             List<Target> recentTargets = allTargets.subList(0, Math.min(5, allTargets.size()));
 
-            // Get activity data for heatmap
+            // Get activity data for heatmap (local)
             Map<String, Integer> problemActivity = targetDAO.getProblemActivityByDate(userEmail);
             Map<String, Integer> topicActivity = targetDAO.getTopicActivityByDate(userEmail);
 
             // Calculate personal rating based on target achievement
-            float personalRating = calculatePersonalRating(totalProblems, solvedProblems, pendingProblems);
+            double currentRating = targetDAO.getUserRating();
+            
+            // Normalize rating if it's from the old scale (e.g. 1500)
+            if (currentRating > 10.0) {
+                currentRating = 5.0;
+                targetDAO.setUserRating(currentRating);
+            }
+            
+            final double finalIcpxRating = currentRating;
+            float personalRating = (float) currentRating;
 
             requireActivity().runOnUiThread(() -> {
                 targetAdapter.updateData(recentTargets);
                 activityHeatmap.setActivityData(problemActivity, topicActivity);
                 personalRatingBar.setRating(personalRating);
+                
+                // Update rating value text
+                if (ratingValueText != null) {
+                    ratingValueText.setText(String.format(Locale.US, "%.1f / 10", finalIcpxRating));
+                }
                 
                 if (recentTargets.isEmpty()) {
                     emptyStateText.setVisibility(View.VISIBLE);
@@ -138,6 +201,9 @@ public class DashboardFragment extends Fragment {
                     emptyStateText.setVisibility(View.GONE);
                     recentTargetsRecyclerView.setVisibility(View.VISIBLE);
                 }
+                
+                // Sync local activity data to cloud
+                syncActivityDataToCloud(userEmail, problemActivity, topicActivity);
             });
         }).start();
     }
@@ -215,6 +281,56 @@ public class DashboardFragment extends Fragment {
                         .commit();
             }
         }
+    }
+
+    /**
+     * Sync local activity data to Firebase cloud
+     */
+    private void syncActivityDataToCloud(String userEmail, Map<String, Integer> problemActivity, 
+                                         Map<String, Integer> topicActivity) {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser == null) {
+            return;
+        }
+        
+        String userId = firebaseUser.getUid();
+        
+        // Merge problem and topic activity into combined map
+        Map<String, Map<String, Integer>> combinedActivity = new HashMap<>();
+        
+        // Add problem activity
+        for (Map.Entry<String, Integer> entry : problemActivity.entrySet()) {
+            String date = entry.getKey();
+            combinedActivity.putIfAbsent(date, new HashMap<>());
+            combinedActivity.get(date).put("problemCount", entry.getValue());
+        }
+        
+        // Add topic activity
+        for (Map.Entry<String, Integer> entry : topicActivity.entrySet()) {
+            String date = entry.getKey();
+            combinedActivity.putIfAbsent(date, new HashMap<>());
+            combinedActivity.get(date).put("topicCount", entry.getValue());
+        }
+        
+        // Ensure all dates have both counts
+        for (Map.Entry<String, Map<String, Integer>> entry : combinedActivity.entrySet()) {
+            Map<String, Integer> counts = entry.getValue();
+            counts.putIfAbsent("problemCount", 0);
+            counts.putIfAbsent("topicCount", 0);
+        }
+        
+        // Batch save to Firebase
+        firebaseManager.batchSaveDailyActivity(userId, combinedActivity, new FirebaseManager.FirestoreCallback() {
+            @Override
+            public void onSuccess() {
+                android.util.Log.d("DashboardFragment", "Activity data synced to cloud successfully");
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                android.util.Log.e("DashboardFragment", "Failed to sync activity data", e);
+            }
+        });
     }
 
     @Override

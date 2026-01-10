@@ -81,6 +81,20 @@
                 android:text="Added today"
                 style="@style/BodySmall"
                 android:layout_marginTop="4dp"/>
+            
+            <TextView
+                android:id="@+id/deadlineTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⏰ 23h 59m left"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
+                android:background="@drawable/deadline_badge_bg"
+                android:textColor="@color/white"
+                android:layout_marginTop="4dp"
+                android:visibility="gone"/>
 
         </LinearLayout>
 

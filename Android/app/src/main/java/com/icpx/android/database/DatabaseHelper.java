@@ -10,7 +10,15 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
     
     private static final String DATABASE_NAME = "icpx.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
+    
+    // Friends table
+    public static final String TABLE_FRIENDS = "friends";
+    public static final String COLUMN_FRIEND_EMAIL = "friend_email";
+    public static final String COLUMN_ADDED_AT = "added_at";
+    
+    // Additional target columns
+    public static final String COLUMN_DEADLINE = "deadline";
 
     // Table names
     public static final String TABLE_USERS = "users";
@@ -107,12 +115,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             // Add user_email column to targets table
             db.execSQL("ALTER TABLE " + TABLE_TARGETS + " ADD COLUMN " + COLUMN_USER_EMAIL + " TEXT DEFAULT ''");
         }
-        if (oldVersion < newVersion && newVersion > 3) {
-            // For future upgrades, handle here
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_TARGETS);
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_SETTINGS);
-            onCreate(db);
+        if (oldVersion < 4 && newVersion >= 4) {
+            // Add deadline column to targets table
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_TARGETS + " ADD COLUMN " + COLUMN_DEADLINE + " INTEGER");
+            } catch (Exception e) {
+                // Column might already exist
+            }
+            
+            // Create friends table
+            String createFriendsTable = "CREATE TABLE IF NOT EXISTS " + TABLE_FRIENDS + " (" +
+                    COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    COLUMN_USER_EMAIL + " TEXT NOT NULL, " +
+                    COLUMN_FRIEND_EMAIL + " TEXT NOT NULL, " +
+                    COLUMN_ADDED_AT + " INTEGER NOT NULL, " +
+                    "UNIQUE(" + COLUMN_USER_EMAIL + ", " + COLUMN_FRIEND_EMAIL + "))";
+            db.execSQL(createFriendsTable);
+            
+            // Initialize user_rating in settings
+            db.execSQL("INSERT OR IGNORE INTO " + TABLE_SETTINGS + " (" + COLUMN_KEY + ", " + COLUMN_VALUE + ") VALUES ('user_rating', '5.0')");
         }
     }
 }

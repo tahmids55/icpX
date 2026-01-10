@@ -1,212 +1,161 @@
-# icpX - Android Version
 
-An Android application for tracking competitive programming progress and managing training goals. This app helps competitive programmers monitor their practice, set targets, and track their improvement on platforms like Codeforces.
+# icpX Android App
 
-## 🎯 Features
+## Overview
 
-### Core Features
-- **User Authentication**: Secure login with BCrypt password hashing
-- **Dashboard**: Overview of statistics and recent activity
-- **Target Management**: Add, track, and manage programming problems
-- **Auto-Fetch**: Automatically fetch problem details from Codeforces API
-- **History Tracking**: View all solved problems with ratings
-- **Statistics**: Track total problems, solved count, pending tasks, and average rating
-- **Offline WebView**: View problem statements offline after first load
-  - Automatically caches pages when loaded with internet
-  - Smart network detection and cache management
-  - System-managed cache storage for offline access
-  - Menu options to view cache info and clear cache
-
-### Technical Features
-- Material Design UI with custom themes
-- SQLite database for local storage
-- RecyclerView with smooth animations
-- Swipe-to-refresh functionality
-- Navigation drawer for easy navigation
-- Custom dialogs and fragments
-- Responsive layouts for all screen sizes
-
-## 📱 Screenshots
-
-*Add your screenshots here*
-
-## 🛠️ Technology Stack
-
-- **Language**: Java
-- **Min SDK**: 24 (Android 7.0)
-- **Target SDK**: 34 (Android 14)
-- **Architecture**: MVVM-like with DAOs
-- **Database**: SQLite
-- **UI Components**: Material Design Components
-- **Networking**: OkHttp
-- **JSON Parsing**: Gson
-- **Password Hashing**: jBCrypt
-- **Charts**: MPAndroidChart (for future features)
-- **Animations**: Lottie, XML animations
-
-## 📂 Project Structure
-
-```
-android_app/
-├── app/
-│   ├── src/main/
-│   │   ├── java/com/icpx/android/
-│   │   │   ├── adapters/           # RecyclerView adapters
-│   │   │   ├── database/           # SQLite helpers and DAOs
-│   │   │   ├── model/              # Data models
-│   │   │   ├── service/            # API services
-│   │   │   ├── ui/                 # Activities and fragments
-│   │   │   │   ├── dialogs/        # Custom dialogs
-│   │   │   │   └── fragments/      # Fragment components
-│   │   │   └── util/               # Utility classes
-│   │   └── res/
-│   │       ├── anim/               # Animations
-│   │       ├── drawable/           # Icons and backgrounds
-│   │       ├── layout/             # XML layouts
-│   │       ├── menu/               # Navigation menu
-│   │       └── values/             # Strings, colors, styles
-│   └── build.gradle
-└── build.gradle
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Android Studio Arctic Fox or later
-- JDK 8 or higher
-- Android SDK with minimum API level 24
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   cd android_app
-   ```
-
-2. **Open in Android Studio**
-   - Open Android Studio
-   - Select "Open an Existing Project"
-   - Navigate to the `android_app` folder
-
-3. **Sync Gradle**
-   - Wait for Gradle to sync dependencies
-   - Resolve any dependency issues if prompted
-
-4. **Run the app**
-   - Connect an Android device or start an emulator
-   - Click the "Run" button in Android Studio
-
-### Build Configuration
-
-The app requires these dependencies (already in `build.gradle`):
-```gradle
-implementation 'androidx.appcompat:appcompat:1.6.1'
-implementation 'com.google.android.material:material:1.11.0'
-implementation 'com.google.code.gson:gson:2.10.1'
-implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-implementation 'org.mindrot:jbcrypt:0.4'
-implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
-implementation 'com.airbnb.android:lottie:6.1.0'
-```
-
-## 📖 Usage
-
-### First Time Setup
-1. Launch the app
-2. Create an account with username and password
-3. Optionally add your Codeforces handle
-4. Choose whether to enable startup password
-
-### Adding Problems
-1. Navigate to Targets section
-2. Tap the floating action button (+)
-3. Paste a Codeforces problem URL
-4. App automatically fetches problem name and rating
-5. Tap "Add Problem"
-
-### Tracking Progress
-- Mark problems as "Solved" or "Failed"
-- View statistics on the dashboard
-- Check history for all solved problems
-- Monitor your average problem rating
-
-## 🎨 Customization
-
-### Themes
-Edit colors in `res/values/colors.xml`:
-- Primary color: `colorPrimary`
-- Accent color: `colorAccent`
-- Background: `backgroundColor`
-
-### Animations
-Modify animations in `res/anim/`:
-- `slide_up_fade_in.xml`
-- `scale_in.xml`
-- `fade_in.xml`
-
-### Styles
-Customize UI in `res/values/styles.xml`:
-- Button styles
-- Card styles
-- Text styles
-
-## 🔐 Security
-
-- Passwords are hashed using BCrypt
-- SQLite database is stored locally on device
-- No sensitive data transmitted over network
-- API calls use HTTPS
-
-## 🌟 Key Differences from Desktop Version
-
-While maintaining the same core concept, the Android version features:
-- Native Android Material Design UI
-- Touch-optimized interactions
-- Mobile-friendly navigation drawer
-- Swipe gestures for refresh
-- Optimized for portrait and landscape modes
-- Background threading for smooth performance
-- Android-specific animations and transitions
-
-## 🔮 Future Enhancements
-
-- [ ] Charts and graphs for progress visualization
-- [ ] Virtual contest mode
-- [ ] Problem recommendations
-- [ ] Multi-platform support (AtCoder, LeetCode)
-- [ ] Dark theme support
-- [ ] Backup and restore
-- [ ] Cloud sync
-- [ ] Notifications for contest reminders
-
-## 📝 API Integration
-
-The app integrates with Codeforces API:
-- **Endpoint**: `https://codeforces.com/api/`
-- **Methods Used**:
-  - `problemset.problems` - Fetch problem details
-  - `user.info` - Get user information
-
-## 🐛 Known Issues
-
-- API rate limiting may affect auto-fetch
-- Network errors are not fully handled
-- Some edge cases in problem URL parsing
-
-## 📄 License
-
-This project is created for educational purposes.
-
-## 👨‍💻 Author
-
-Adapted from the JavaFX desktop version of icpX
-
-## 🙏 Acknowledgments
-
-- Codeforces for providing the API
-- Material Design Components team
-- Open source library contributors
+icpX is a comprehensive Android application designed for competitive programmers to manage, track, and analyze their problem-solving progress, with deep integration for Codeforces and cloud sync via Firebase. The app provides robust features for user authentication, problem/target management, statistics, cloud sync, and more, all wrapped in a modern Material Design UI.
 
 ---
 
-**Note**: This is an Android adaptation of the icpX desktop application, maintaining the same concept but redesigned for mobile platforms with native Android features and Material Design guidelines.
+## 🎯 App Purpose & Main Features
+
+- **User Authentication**: Secure login and account management using BCrypt password hashing and Firebase Auth (email/password & Google Sign-In).
+- **Target/Problem Management**: Add, edit, delete, and solve programming problems ("targets"). Problems can be fetched automatically from Codeforces API by pasting a URL.
+- **History & Statistics**: Track all solved problems, view history, ratings, heatmap, and progress charts. Dashboard summarizes total solves, pending tasks, and average rating.
+- **Cloud Sync**: Manual and automatic sync of user data (problems, status, ratings, handle) between local SQLite and Firebase Firestore. Google Sign-In supported for account linking.
+- **UI/UX**: Material Design with custom themes, navigation drawer, fragments, activities, responsive layouts, notifications, and smooth animations.
+- **Database**: Local SQLite database for offline-first experience. Tables for users, targets/problems, history, and statistics.
+- **Background Services**: Uses WorkManager for scheduled syncs and reminders. Handles contest tracking and notifications.
+- **Codeforces API Integration**: Fetches problem details and verifies user handles using official Codeforces API endpoints.
+- **Error Handling**: Graceful handling of network errors, API rate limits, sync conflicts, and edge cases in problem parsing.
+- **Other Features**: Reminders for contests, offline WebView for cached problem statements, backup/restore, and more.
+
+---
+
+## 🧑‍💻 User Authentication & Account Management
+
+- **Account Creation**: Users sign up with email/password (min 6 chars) and optional Codeforces handle. Firebase Auth creates account and stores user data in Firestore.
+- **Login**: Email/password authentication via Firebase. Google Sign-In supported (OAuth2 flow).
+- **Local Auth**: BCrypt password hashing for local login. Optionally, startup password can be enabled for extra security.
+- **Account Data**: Firestore stores email, handle, creation date, and targets. Each user has a unique Firebase UID.
+
+---
+
+## 📚 Problem/Target Management
+
+- **Add Problem**: Paste Codeforces URL, app fetches name/rating via API. Manual entry also supported.
+- **Edit/Delete**: Problems can be edited or removed from the list.
+- **Solve/History**: Mark problems as solved/failed. History view shows all attempts, ratings, and timestamps.
+- **Sync**: Problems and their status are synced to Firestore under `users/{userId}/targets/{targetId}`.
+
+---
+
+## 📊 Statistics & Visualization
+
+- **Dashboard**: Shows total problems, solved count, pending, average rating.
+- **Charts**: MPAndroidChart used for progress graphs and heatmaps.
+- **History**: Full history of solved problems, sortable by date/rating.
+- **Ratings**: Tracks problem ratings, user performance over time.
+
+---
+
+## ☁️ Cloud Sync (Firebase Firestore & Google Sign-In)
+
+- **Manual Sync**: User can trigger upload/download from cloud in Settings.
+- **Auto Sync**: Optionally syncs on login or after changes.
+- **Bidirectional**: Syncs both local → cloud and cloud → local, with conflict resolution.
+   - All targets/problems
+   - Status (pending/achieved)
+   - Ratings
+   - Creation dates
+- **Firebase Structure**:
+   ```
+            └── targets/
+                  ├── {targetId}/
+- **Google Sign-In**: OAuth2 flow, links Firebase account, enables cloud sync.
+
+## 🖌️ UI/UX Design
+
+- **Navigation**: Navigation drawer, fragments for dashboard, targets, settings, history, etc.
+- **Themes**: Light/dark theme support, custom color palette.
+- **Notifications**: Contest reminders, sync status, error alerts.
+   - `users`: id, email, codeforcesHandle, passwordHash, createdAt
+   - `targets`: id, name, type, status, rating, createdAt, userId
+- **Relationships**:
+   - One user → many targets
+   - One target → many history entries
+---
+
+- **FirebaseSyncService**: Handles bidirectional sync, conflict resolution, error handling.
+- **Reminders**: Contest tracking, custom reminders via Settings.
+## 🌐 Codeforces API Integration
+
+   - Auto-fetch problem name/rating
+   - Verify Codeforces handle
+---
+## ⚠️ Error Handling & Edge Cases
+
+- **Network Errors**: Graceful fallback, retry logic, offline cache
+- **API Rate Limiting**: Notifies user, backs off requests
+- **Sync Conflicts**: Resolves using timestamps, user choice
+- **Invalid Data**: Validates URLs, handles missing fields
+- **Security**: Passwords never synced, Firestore rules enforced
+
+---
+
+## 🛠️ Other Features
+
+- **Reminders**: Customizable contest reminders
+- **Contest Tracking**: Tracks upcoming contests, notifies user
+- **Offline WebView**: Caches problem statements for offline viewing
+- **Backup/Restore**: Planned for future releases
+
+---
+
+## ⚙️ Build & Run Instructions
+
+### Prerequisites
+- Android Studio (latest recommended)
+- JDK 11+
+- Firebase project setup (see FIREBASE_SETUP.md & GOOGLE_SIGNIN_SETUP.md)
+
+### Build Steps
+2. Open in Android Studio
+3. Ensure `google-services.json` is present in `app/`
+5. Configure Firebase (see setup guides)
+
+### Dependencies
+- Firebase Auth, Firestore, Realtime Database
+- Google Sign-In
+- MPAndroidChart
+- WorkManager
+---
+
+- `google-services.json` - Firebase config
+
+---
+
+## 📝 Notes
+- Firebase integration is modular and can be extended
+- Security: passwords are local-only, Firestore rules recommended
+- See FIREBASE_TESTING.md for testing cloud sync
+
+---
+
+## 📄 License
+This project is created for educational purposes.
+
+## 👨‍💻 Author
+Adapted from the JavaFX desktop version of icpX
+
+---
+
+## 🔮 Future Enhancements
+- Charts/graphs for progress
+- Virtual contest mode
+- Problem recommendations
+- Multi-platform support (AtCoder, LeetCode)
+- Backup/restore
+- Notifications
+- Dark theme
+
+---
+
+## References
+- [FIREBASE_SETUP.md](../FIREBASE_SETUP.md)
+- [GOOGLE_SIGNIN_SETUP.md](../GOOGLE_SIGNIN_SETUP.md)
+- [FIREBASE_TESTING.md](../FIREBASE_TESTING.md)
+
+---
+
+For any questions or contributions, please open an issue or pull request.

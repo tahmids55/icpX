@@ -70,9 +70,17 @@ public class TargetDAO {
     public long createTarget(Target target, String userEmail) {
         // Check for duplicate problem link
         if (target.getProblemLink() != null && !target.getProblemLink().isEmpty()) {
-            Target existing = getTargetByProblemLink(target.getProblemLink(), userEmail);
+            // For history items (deleted=true), check including deleted items to prevent duplicates
+            // For active items (deleted=false), only check active items
+            Target existing;
+            if (target.isDeleted()) {
+                existing = getTargetByProblemLinkIncludingDeleted(target.getProblemLink(), userEmail);
+            } else {
+                existing = getTargetByProblemLink(target.getProblemLink(), userEmail);
+            }
+            
             if (existing != null) {
-                android.util.Log.w("TargetDAO", "Duplicate problem detected: " + target.getProblemLink() + ". Skipping creation.");
+                android.util.Log.w("TargetDAO", "Duplicate problem detected: " + target.getProblemLink() + " (deleted=" + target.isDeleted() + "). Skipping creation.");
                 return existing.getId(); // Return existing ID instead of creating duplicate
             }
         }
@@ -89,6 +97,13 @@ public class TargetDAO {
         values.put(DatabaseHelper.COLUMN_RATING, target.getRating());
         values.put(DatabaseHelper.COLUMN_DELETED, target.isDeleted() ? 1 : 0);
         values.put(DatabaseHelper.COLUMN_CREATED_AT, target.getCreatedAt().getTime());
+        
+        // Set deadline (24 hours from creation if not specified)
+        if (target.getDeadline() != null) {
+            values.put(DatabaseHelper.COLUMN_DEADLINE, target.getDeadline().getTime());
+        } else {
+            values.put(DatabaseHelper.COLUMN_DEADLINE, System.currentTimeMillis() + 24 * 60 * 60 * 1000);
+        }
 
         return db.insert(DatabaseHelper.TABLE_TARGETS, null, values);
     }
@@ -215,6 +230,34 @@ public class TargetDAO {
     }
 
     /**
+     * Check if a target exists by problem link (including deleted items)
+     * Used for sync to prevent recreating intentionally deleted items
+     */
+    public Target getTargetByProblemLinkIncludingDeleted(String problemLink, String userEmail) {
+        if (problemLink == null || problemLink.isEmpty()) {
+            return null;
+        }
+        
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(
+                DatabaseHelper.TABLE_TARGETS,
+                null,
+                DatabaseHelper.COLUMN_PROBLEM_LINK + " = ? AND " + DatabaseHelper.COLUMN_USER_EMAIL + " = ?",
+                new String[]{problemLink, userEmail},
+                null,
+                null,
+                null
+        );
+
+        Target target = null;
+        if (cursor.moveToFirst()) {
+            target = cursorToTarget(cursor);
+        }
+        cursor.close();
+        return target;
+    }
+
+    /**
      * Get achieved targets for history (includes deleted items)
      */
     public List<Target> getAchievedTargetsForHistory(String userEmail) {
@@ -239,11 +282,18 @@ public class TargetDAO {
 
     /**
      * Update target status
+     * When marking as 'achieved', updates the created_at timestamp to current time
+     * so the heatmap shows when it was actually solved
      */
     public int updateTargetStatus(int targetId, String status) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.COLUMN_STATUS, status);
+        
+        // Update created_at to now when marking as achieved (for heatmap tracking)
+        if ("achieved".equals(status)) {
+            values.put(DatabaseHelper.COLUMN_CREATED_AT, System.currentTimeMillis());
+        }
 
         return db.update(
                 DatabaseHelper.TABLE_TARGETS,
@@ -392,6 +442,17 @@ public class TargetDAO {
         
         target.setDeleted(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_DELETED)) == 1);
         target.setCreatedAt(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CREATED_AT))));
+        
+        // Read deadline if column exists
+        try {
+            int deadlineIndex = cursor.getColumnIndex(DatabaseHelper.COLUMN_DEADLINE);
+            if (deadlineIndex >= 0 && !cursor.isNull(deadlineIndex)) {
+                target.setDeadline(new Date(cursor.getLong(deadlineIndex)));
+            }
+        } catch (Exception e) {
+            // Column may not exist yet
+        }
+        
         return target;
     }
 
@@ -536,5 +597,156 @@ public class TargetDAO {
         }
         cursor.close();
         return count;
+    }
+    
+    // ===== User Rating Methods =====
+    
+    /**
+     * Get current user rating
+     */
+    public double getUserRating() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(
+                DatabaseHelper.TABLE_SETTINGS,
+                new String[]{DatabaseHelper.COLUMN_VALUE},
+                DatabaseHelper.COLUMN_KEY + " = ?",
+                new String[]{"user_rating"},
+                null, null, null
+        );
+        
+        double rating = 5.0; // Default rating (scale 1-10)
+        if (cursor.moveToFirst()) {
+            try {
+                rating = Double.parseDouble(cursor.getString(0));
+            } catch (NumberFormatException e) {
+                rating = 5.0;
+            }
+        }
+        cursor.close();
+        return rating;
+    }
+    
+    /**
+     * Set user rating
+     */
+    public void setUserRating(double rating) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(DatabaseHelper.COLUMN_KEY, "user_rating");
+        values.put(DatabaseHelper.COLUMN_VALUE, String.valueOf(rating));
+        db.insertWithOnConflict(DatabaseHelper.TABLE_SETTINGS, null, values, 
+                SQLiteDatabase.CONFLICT_REPLACE);
+    }
+    
+    /**
+     * Adjust user rating (add delta, can be negative for penalty)
+     * @return The new rating
+     */
+    public double adjustUserRating(double delta) {
+        double current = getUserRating();
+        double newRating = Math.max(0, current + delta); // Minimum 0
+        setUserRating(newRating);
+        
+        // Sync to Firebase for friends to see
+        syncUserRatingToFirebase(newRating);
+        
+        return newRating;
+    }
+    
+    /**
+     * Sync user rating to Firebase for friends to view
+     * Also updates public userProfiles collection
+     */
+    private void syncUserRatingToFirebase(double rating) {
+        try {
+            com.google.firebase.auth.FirebaseUser user = 
+                com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+            if (user == null || user.getEmail() == null) return;
+            
+            String email = user.getEmail().toLowerCase();
+            String uid = user.getUid();
+            
+            com.google.firebase.firestore.FirebaseFirestore db = 
+                com.google.firebase.firestore.FirebaseFirestore.getInstance();
+            
+            // Update private user document
+            java.util.Map<String, Object> userData = new java.util.HashMap<>();
+            userData.put("rating", rating);
+            userData.put("email", email);
+            userData.put("lastUpdated", System.currentTimeMillis());
+            
+            db.collection("users").document(uid)
+                .set(userData, com.google.firebase.firestore.SetOptions.merge())
+                .addOnSuccessListener(aVoid -> 
+                    android.util.Log.d("TargetDAO", "User rating synced to Firebase: " + rating))
+                .addOnFailureListener(e -> 
+                    android.util.Log.e("TargetDAO", "Error syncing rating: " + e.getMessage()));
+            
+            // Also update public profile (accessible by friends)
+            String emailKey = email.replace(".", "_").replace("@", "_at_");
+            java.util.Map<String, Object> profileData = new java.util.HashMap<>();
+            profileData.put("uid", uid);
+            profileData.put("email", email);
+            profileData.put("rating", rating);
+            profileData.put("lastUpdated", System.currentTimeMillis());
+            
+            db.collection("userProfiles").document(emailKey)
+                .set(profileData, com.google.firebase.firestore.SetOptions.merge())
+                .addOnSuccessListener(aVoid -> 
+                    android.util.Log.d("TargetDAO", "User profile synced to Firebase"))
+                .addOnFailureListener(e -> 
+                    android.util.Log.e("TargetDAO", "Error syncing profile: " + e.getMessage()));
+                    
+        } catch (Exception e) {
+            android.util.Log.e("TargetDAO", "Error syncing rating: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Calculate rating change when completing a target
+     * @param targetDeadline The deadline of the target
+     * @param completedAt The time when the target was completed
+     * @return The rating change (positive if on time, negative if late)
+     */
+    public double calculateRatingChange(Date targetDeadline, Date completedAt) {
+        if (targetDeadline == null || completedAt == null) {
+            return 0.02; // Default reward if no deadline set
+        }
+        
+        if (completedAt.before(targetDeadline) || completedAt.equals(targetDeadline)) {
+            // Completed on time - reward
+            return 0.02;
+        } else {
+            // Late - penalty based on minutes exceeded
+            long diffMs = completedAt.getTime() - targetDeadline.getTime();
+            long minutesLate = diffMs / (60 * 1000);
+            double penalty = minutesLate * 0.01;
+            return -penalty;
+        }
+    }
+    
+    /**
+     * Update target status with rating adjustment
+     * Returns the rating change applied
+     */
+    public double updateTargetStatusWithRating(int targetId, String status, String userEmail) {
+        Target target = getTargetById(targetId);
+        if (target == null) {
+            return 0;
+        }
+        
+        double ratingChange = 0;
+        
+        // Calculate rating change when marking as achieved
+        if ("achieved".equals(status) && !"achieved".equals(target.getStatus())) {
+            Date now = new Date();
+            ratingChange = calculateRatingChange(target.getDeadline(), now);
+            adjustUserRating(ratingChange);
+        }
+        
+        // Update the status
+        updateTargetStatus(targetId, status);
+        
+        return ratingChange;
     }
 }

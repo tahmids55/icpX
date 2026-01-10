@@ -109,6 +109,8 @@ public class MainActivity extends AppCompatActivity
             loadFragment(new ContestsFragment());
         } else if (itemId == R.id.nav_history) {
             loadFragment(new HistoryFragment());
+        } else if (itemId == R.id.nav_friends) {
+            loadFragment(new com.icpx.android.ui.fragments.FriendsFragment());
         } else if (itemId == R.id.nav_settings) {
             loadFragment(new SettingsFragment());
         } else if (itemId == R.id.nav_logout) {

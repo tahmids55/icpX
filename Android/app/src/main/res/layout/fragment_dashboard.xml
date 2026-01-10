@@ -36,12 +36,30 @@
             android:layout_marginBottom="24dp"/>
 
         <!-- Personal Rating Bar -->
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/ratingSection"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Personal Rating (0-10)"
-            style="@style/TitleMedium"
-            android:layout_marginBottom="8dp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+            
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Personal Rating"
+                style="@style/TitleMedium"/>
+            
+            <TextView
+                android:id="@+id/ratingValueText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1500.00"
+                android:textColor="#FFD700"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
 
         <androidx.cardview.widget.CardView
             style="@style/CardStyle"
@@ -65,18 +83,58 @@
             style="@style/TitleMedium"
             android:layout_marginBottom="8dp"/>
 
-        <HorizontalScrollView
+        <!-- Month Selector -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:scrollbars="none"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/prevMonthButton"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="Previous month"
+                app:icon="@android:drawable/arrow_down_float"
+                app:iconTint="?attr/colorPrimary"/>
+
+            <TextView
+                android:id="@+id/currentMonthText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="January 2026"
+                android:textAlignment="center"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nextMonthButton"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="Next month"
+                app:icon="@android:drawable/arrow_up_float"
+                app:iconTint="?attr/colorPrimary"/>
+
+        </LinearLayout>
+
+        <!-- Heatmap Card -->
+        <androidx.cardview.widget.CardView
+            style="@style/CardStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="16dp">
 
             <com.icpx.android.ui.views.ActivityHeatmapView
                 android:id="@+id/activityHeatmap"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"/>
 
-        </HorizontalScrollView>
+        </androidx.cardview.widget.CardView>
 
         <!-- Legend for heatmap -->
         <LinearLayout

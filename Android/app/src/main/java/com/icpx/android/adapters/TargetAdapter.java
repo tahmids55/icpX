@@ -118,6 +118,55 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
                 android.content.res.ColorStateList.valueOf(statusColor));
         holder.statusIndicator.setBackgroundColor(statusColor);
         
+        // Set deadline countdown for pending items
+        if (target.getDeadline() != null && !"achieved".equals(target.getStatus())) {
+            long now = System.currentTimeMillis();
+            long deadline = target.getDeadline().getTime();
+            
+            if (now < deadline) {
+                // Time remaining
+                long diffMs = deadline - now;
+                long hours = diffMs / (1000 * 60 * 60);
+                long minutes = (diffMs / (1000 * 60)) % 60;
+                
+                String timeText;
+                int bgColor;
+                if (hours >= 12) {
+                    timeText = "⏰ " + hours + "h left";
+                    bgColor = Color.parseColor("#4CAF50"); // Green
+                } else if (hours >= 1) {
+                    timeText = "⏰ " + hours + "h " + minutes + "m left";
+                    bgColor = Color.parseColor("#FF9800"); // Orange
+                } else {
+                    timeText = "⏰ " + minutes + "m left";
+                    bgColor = Color.parseColor("#F44336"); // Red
+                }
+                
+                holder.deadlineTextView.setText(timeText);
+                holder.deadlineTextView.getBackground().setTint(bgColor);
+                holder.deadlineTextView.setVisibility(View.VISIBLE);
+            } else {
+                // Overdue
+                long diffMs = now - deadline;
+                long hours = diffMs / (1000 * 60 * 60);
+                long minutes = (diffMs / (1000 * 60)) % 60;
+                
+                String timeText;
+                double penalty = (hours * 60 + minutes) * 0.01;
+                if (hours >= 1) {
+                    timeText = String.format("⚠ %dh %dm late (-%.2f)", hours, minutes, penalty);
+                } else {
+                    timeText = String.format("⚠ %dm late (-%.2f)", minutes, penalty);
+                }
+                
+                holder.deadlineTextView.setText(timeText);
+                holder.deadlineTextView.getBackground().setTint(Color.parseColor("#B71C1C")); // Dark red
+                holder.deadlineTextView.setVisibility(View.VISIBLE);
+            }
+        } else {
+            holder.deadlineTextView.setVisibility(View.GONE);
+        }
+        
         // Selection Mode Logic
         if (isSelectionMode && "achieved".equals(target.getStatus())) {
             holder.selectionCheckBox.setVisibility(View.VISIBLE);
@@ -383,6 +432,7 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
         TextView typeTextView;
         TextView ratingTextView;
         TextView dateTextView;
+        TextView deadlineTextView;
         Chip statusChip;
         MaterialButton pendingButton;
         CheckBox selectionCheckBox;
@@ -394,6 +444,7 @@ public class TargetAdapter extends RecyclerView.Adapter<TargetAdapter.ViewHolder
             typeTextView = itemView.findViewById(R.id.typeTextView);
             ratingTextView = itemView.findViewById(R.id.ratingTextView);
             dateTextView = itemView.findViewById(R.id.dateTextView);
+            deadlineTextView = itemView.findViewById(R.id.deadlineTextView);
             statusChip = itemView.findViewById(R.id.statusChip);
             pendingButton = itemView.findViewById(R.id.pendingButton);
             selectionCheckBox = itemView.findViewById(R.id.selectionCheckBox);

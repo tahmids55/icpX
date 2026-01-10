@@ -13,6 +13,7 @@ public class Target {
     private String topicName;
     private String websiteUrl;
     private Date createdAt;
+    private Date deadline; // 24h deadline for rating penalty
     private String status; // "pending", "achieved", "failed"
     private Integer rating; // Problem rating (difficulty)
     private String description; // Additional description for topics or notes
@@ -21,6 +22,7 @@ public class Target {
     public Target() {
         this.status = "pending";
         this.createdAt = new Date();
+        this.deadline = new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000); // Default 24h deadline
         this.deleted = false;
     }
 
@@ -29,6 +31,15 @@ public class Target {
         this.name = name;
         this.status = "pending";
         this.createdAt = new Date();
+        this.deadline = new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000); // Default 24h deadline
+    }
+
+    public Date getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(Date deadline) {
+        this.deadline = deadline;
     }
 
     // Getters and Setters

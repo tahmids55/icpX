@@ -59,8 +59,6 @@ public class SettingsFragment extends Fragment {
     private SwitchCompat contestRemindersSwitch;
     private View reminderTimeLayout;
     private TextView reminderTimeText;
-    private MaterialButton syncToCloudButton;
-    private MaterialButton syncFromCloudButton;
     private MaterialButton fullSyncButton;
     private TextView lastSyncText;
     private SharedPreferences prefs;
@@ -114,8 +112,6 @@ public class SettingsFragment extends Fragment {
         contestRemindersSwitch = view.findViewById(R.id.contestRemindersSwitch);
         reminderTimeLayout = view.findViewById(R.id.reminderTimeLayout);
         reminderTimeText = view.findViewById(R.id.reminderTimeText);
-        syncToCloudButton = view.findViewById(R.id.syncToCloudButton);
-        syncFromCloudButton = view.findViewById(R.id.syncFromCloudButton);
         fullSyncButton = view.findViewById(R.id.fullSyncButton);
         lastSyncText = view.findViewById(R.id.lastSyncText);
 
@@ -234,9 +230,7 @@ public class SettingsFragment extends Fragment {
 
         reminderTimeLayout.setOnClickListener(v -> showReminderTimeDialog());
 
-        // Firebase Sync buttons
-        syncToCloudButton.setOnClickListener(v -> uploadToCloud());
-        syncFromCloudButton.setOnClickListener(v -> downloadFromCloud());
+        // Firebase Sync button
         fullSyncButton.setOnClickListener(v -> performFullSync());
     }
 
@@ -594,8 +588,6 @@ public class SettingsFragment extends Fragment {
     }
 
     private void setButtonsEnabled(boolean enabled) {
-        syncToCloudButton.setEnabled(enabled);
-        syncFromCloudButton.setEnabled(enabled);
         fullSyncButton.setEnabled(enabled);
     }
 
