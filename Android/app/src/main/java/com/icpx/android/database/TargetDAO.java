@@ -639,12 +639,13 @@ public class TargetDAO {
     }
     
     /**
-     * Adjust user rating (add delta, can be negative for penalty)
+         * Adjust user rating (add delta, can be negative for penalty)
+         * Rating is clamped to 0-10 scale
      * @return The new rating
      */
     public double adjustUserRating(double delta) {
         double current = getUserRating();
-        double newRating = Math.max(0, current + delta); // Minimum 0
+        double newRating = Math.max(0, Math.min(10, current + delta)); // Clamp between 0 and 10
         setUserRating(newRating);
         
         // Sync to Firebase for friends to see

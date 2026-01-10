@@ -1,0 +1,4 @@
+{
+    "firebaseApiKey": "YOUR_FIREBASE_API_KEY_HERE",
+    "_comment": "Copy this file to ~/.icpx/config.json and add your Firebase API key"
+}
