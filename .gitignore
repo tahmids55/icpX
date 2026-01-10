@@ -13,3 +13,8 @@ Android/app/build/
 Android/*.iml
 Android/*.log
 Android/.DS_Store
+
+# Sensitive credentials
+**/service-account.json
+**/desktop_oauth_credentials.json
+Android/app/google-services.json
