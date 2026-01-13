@@ -12,7 +12,7 @@ import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.google.android.material.button.MaterialButton;
@@ -148,7 +148,7 @@ public class AddProblemDialog extends Dialog {
         contestFetchedInfo = findViewById(R.id.contestFetchedInfo);
 
         // Setup problem index spinners
-        String[] problemIndices = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "A1", "A2", "B1", "B2", "C1", "C2", "D1", "D2"};
+        String[] problemIndices = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "A1", "A2", "B1", "B2", "C1", "C2", "D1", "D2" , "E1" , "E2" , "F1" , "F2"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), 
                 android.R.layout.simple_spinner_dropdown_item, problemIndices);
         problemIndexFromSpinner.setAdapter(adapter);
@@ -273,7 +273,7 @@ public class AddProblemDialog extends Dialog {
         }
 
         // Get problem indices array
-        String[] allIndices = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "A1", "A2", "B1", "B2", "C1", "C2", "D1", "D2"};
+        String[] allIndices = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "A1", "A2", "B1", "B2", "C1", "C2", "D1", "D2", "E1" , "E2" , "F1" , "F2"};
         int fromPos = -1, toPos = -1;
         for (int i = 0; i < allIndices.length; i++) {
             if (allIndices[i].equals(fromIndex)) fromPos = i;
@@ -300,6 +300,7 @@ public class AddProblemDialog extends Dialog {
             int successCount = 0;
             for (String index : problemsToFetch) {
                 String link = "https://codeforces.com/contest/" + contestId + "/problem/" + index;
+                
                 CodeforcesService.ProblemDetails details = codeforcesService.fetchProblemDetails(link);
 
                 if (details != null) {
@@ -322,6 +323,8 @@ public class AddProblemDialog extends Dialog {
                         }
                         contestFetchedInfo.setText("Added " + finalSuccess + "/" + total + " problems");
                     });
+                } else {
+                    System.err.println("TakiNULL");
                 }
             }
 

@@ -32,7 +32,7 @@ public class PersonalRatingBarView extends View {
     private Paint ratingTextPaint;
     private Paint axisPaint;
     
-    private float currentRating = 5.0f; // Default rating
+    private float currentRating = 0.0f; // Default rating
     
     // Rating bands: min, max, color
     private static class RatingBand {

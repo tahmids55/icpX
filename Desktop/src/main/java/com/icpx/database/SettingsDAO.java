@@ -101,12 +101,12 @@ public class SettingsDAO {
     public static double getUserRating() {
         String value = getSetting("user_rating");
         if (value == null) {
-            return 5.0; // Default starting rating (scale 1-10)
+            return 0.0; // Default starting rating (scale 1-10)
         }
         try {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
-            return 5.0;
+            return 0.0;
         }
     }
     
